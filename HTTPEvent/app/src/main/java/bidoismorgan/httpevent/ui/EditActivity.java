@@ -1,9 +1,13 @@
-package bidoismorgan.httpevent;
+package bidoismorgan.httpevent.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
 
+import bidoismorgan.httpevent.R;
 
+/**
+ * Created by Bidois Morgan on 01/04/15.
+ */
 public class EditActivity extends Activity {
 
     @Override
