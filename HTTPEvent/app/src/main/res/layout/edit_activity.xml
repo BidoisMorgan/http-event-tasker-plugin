@@ -3,9 +3,42 @@
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".EditActivity">
+    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".EditActivity"
+    android:id="@+id/edit_layout">
 
-    <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <TextView android:text="@string/lbl_addr" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/txt_lbl_addr" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/txt_addr"
+        android:layout_alignTop="@+id/txt_lbl_addr"
+        android:layout_toRightOf="@+id/txt_lbl_addr"
+        android:layout_toEndOf="@+id/txt_lbl_addr"
+        android:layout_marginLeft="5dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/lbl_port"
+        android:id="@+id/txt_lbl_port"
+        android:layout_below="@+id/txt_lbl_addr"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/txt_port"
+        android:layout_alignTop="@+id/txt_lbl_port"
+        android:layout_toRightOf="@+id/txt_lbl_port"
+        android:layout_toEndOf="@+id/txt_lbl_port"
+        android:layout_marginLeft="5dp" />
 
 </RelativeLayout>

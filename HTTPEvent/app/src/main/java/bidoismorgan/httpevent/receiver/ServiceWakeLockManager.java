@@ -17,7 +17,8 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
-import com.yourcompany.yourcondition.Constants;
+import bidoismorgan.httpevent.Constants;
+
 
 /**
  * A simple utility class to provide static access to acquiring a WakeLock across receipt of Intent through
@@ -37,7 +38,7 @@ public final class ServiceWakeLockManager
      * Acquire a WakeLock. Calls to this method should eventually be balanced by called to
      * {@link #releaseLock()}.
      *
-     * @param c {@code Context} for obtaining a WakeLock. This parameter cannot be null.
+     * @param context {@code Context} for obtaining a WakeLock. This parameter cannot be null.
      */
     public static void aquireLock(final Context context)
     {

@@ -46,6 +46,14 @@ public final class PluginBundleManager
             "com.yourcompany.yourcondition.extra.INT_VERSION_CODE"; //$NON-NLS-1$
 
     /**
+     * Type: {@code int}.
+     * <p>
+     * Int representing PORT
+     */
+    public static final String BUNDLE_EXTRA_INT_PORT =
+            "com.bidoismorgan.extra.INT_PORT"; //$NON-NLS-1$
+
+    /**
      * Method to verify the content of the bundle are correct.
      * <p>
      * This method will not mutate {@code bundle}.
@@ -139,6 +147,20 @@ public final class PluginBundleManager
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putBoolean(BUNDLE_EXTRA_BOOLEAN_STATE, isDisplayOn);
+
+        return result;
+    }
+
+    /**
+     * @param context Application context.
+     * @param paramInt
+     * @return A plug-in bundle.
+     */
+    public static Bundle generateBundle(final Context context, final int paramInt)
+    {
+        final Bundle result = new Bundle();
+        result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
+        result.putInt(BUNDLE_EXTRA_INT_PORT, paramInt);
 
         return result;
     }
