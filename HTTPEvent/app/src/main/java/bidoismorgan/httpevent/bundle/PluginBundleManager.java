@@ -24,6 +24,8 @@ import bidoismorgan.httpevent.Constants;
  */
 public final class PluginBundleManager
 {
+    public static final String BASE_EXTRA_BUNDLE = "com.bidoismorgan.extra.";
+
     /**
      * Type: {@code boolean}.
      * <p>
@@ -50,8 +52,9 @@ public final class PluginBundleManager
      * <p>
      * Int representing PORT
      */
-    public static final String BUNDLE_EXTRA_INT_PORT =
-            "com.bidoismorgan.extra.INT_PORT"; //$NON-NLS-1$
+    public static final String BUNDLE_EXTRA_INT_PORT =  BASE_EXTRA_BUNDLE + "INT_PORT"; //$NON-NLS-1$
+
+    public static final String BUNDLE_EXTRA_STRING_URL = BASE_EXTRA_BUNDLE + "STRING_URL";
 
     /**
      * Method to verify the content of the bundle are correct.
@@ -161,6 +164,14 @@ public final class PluginBundleManager
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putInt(BUNDLE_EXTRA_INT_PORT, paramInt);
+
+        return result;
+    }
+
+    public static Bundle generateURLBundle(final Context context, final String url) {
+        final Bundle result = new Bundle();
+        result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
+        result.putString(BUNDLE_EXTRA_STRING_URL, url);
 
         return result;
     }

@@ -3,8 +3,17 @@ package bidoismorgan.httpevent.ui;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.text.format.Formatter;
+import android.util.Log;
+import android.widget.EditText;
 import android.widget.TextView;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+
+import bidoismorgan.httpevent.Constants;
 import bidoismorgan.httpevent.R;
 import bidoismorgan.httpevent.bundle.PluginBundleManager;
 
@@ -14,6 +23,8 @@ import bidoismorgan.httpevent.bundle.PluginBundleManager;
 public class EditActivity extends AbstractPluginActivity {
 
     private static int PORT = 8765;
+
+    private EditText editName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,11 +36,19 @@ public class EditActivity extends AbstractPluginActivity {
 
         TextView txtPort = (TextView) findViewById(R.id.txt_port);
         txtPort.setText(Integer.toString(PORT));
+
+        editName = (EditText) findViewById(R.id.edit_txt_name);
     }
 
     @Override
     public void finish() {
         final Intent resultIntent = new Intent();
+
+        String eventName = "Default";
+
+        if (!editName.getText().equals("")) {
+            eventName = String.valueOf(editName.getText());
+        }
 
         /*
          * This extra is the data to ourselves: either for the Activity or the BroadcastReceiver. Note
@@ -45,7 +64,7 @@ public class EditActivity extends AbstractPluginActivity {
         /*
          * The blurb is concise status text to be displayed in the host's UI.
          */
-        resultIntent.putExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB, "PORT=" + PORT);
+        resultIntent.putExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB, eventName);
 
         setResult(RESULT_OK, resultIntent);
 

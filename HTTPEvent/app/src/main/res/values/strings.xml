@@ -6,4 +6,5 @@
     <string name="plugin_name">HTTP Event</string>
     <string name="lbl_addr">IP Address :</string>
     <string name="lbl_port">Port :</string>
+    <string name="lbl_name">Nom évènement :</string>
 </resources>

@@ -17,16 +17,24 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.text.format.Formatter;
 import android.util.Log;
 
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.Map;
+import java.util.TreeMap;
 
 import bidoismorgan.httpevent.Constants;
 import bidoismorgan.httpevent.TaskerPlugin;
+import bidoismorgan.httpevent.bundle.PluginBundleManager;
 import bidoismorgan.httpevent.ui.EditActivity;
 
 /**
@@ -147,6 +155,25 @@ public final class BackgroundService extends Service {
         //mReceiver = null;
     }
 
+    public String getLocalIpAddress() {
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        String ip = Formatter.formatIpAddress(inetAddress.hashCode());
+                        Log.i(Constants.LOG_TAG, "***** IP=" + ip);
+                        return ip;
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e(Constants.LOG_TAG, ex.toString());
+        }
+        return null;
+    }
+
     /**
      * A subclass of BroadcastReceiver that will always send a re-query Intent to Locale when it receives an
      * Intent.
@@ -231,9 +258,16 @@ public final class BackgroundService extends Service {
                 buf.append(p.getKey() + " : " + p.getValue() + "\n");
             }
 
-            final String html = "<html><head><head><body><h1>Hello, World</h1></body></html>";
+            final String html = "<html><head><head><body><h1>Hello, World</h1></body>" + buf + "</html>";
 
             TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
+
+            TreeMap<String, String> tree = new TreeMap<String, String>(parms);
+
+            Bundle dataBundle = PluginBundleManager.generateURLBundle(context, tree.get(tree.lastKey()));
+
+            TaskerPlugin.Event.addPassThroughData(INTENT_REQUEST_REQUERY, dataBundle);
+
             context.sendBroadcast(INTENT_REQUEST_REQUERY);
 
             return new Response(Response.Status.OK, MIME_HTML, html);

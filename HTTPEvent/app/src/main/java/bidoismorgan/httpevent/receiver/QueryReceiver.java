@@ -33,26 +33,21 @@ import bidoismorgan.httpevent.bundle.PluginBundleManager;
  * @see com.twofortyfouram.locale.Intent#ACTION_QUERY_CONDITION
  * @see com.twofortyfouram.locale.Intent#EXTRA_BUNDLE
  */
-public final class QueryReceiver extends BroadcastReceiver
-{
+public final class QueryReceiver extends BroadcastReceiver {
 
     /**
      * @param context {@inheritDoc}.
-     * @param intent the incoming {@link com.twofortyfouram.locale.Intent#ACTION_QUERY_CONDITION} Intent. This
-     *            should always contain the {@link com.twofortyfouram.locale.Intent#EXTRA_BUNDLE} that was
-     *            saved by {@link bidoismorgan.httpevent.ui.EditActivity} and later broadcast by Locale.
+     * @param intent  the incoming {@link com.twofortyfouram.locale.Intent#ACTION_QUERY_CONDITION} Intent. This
+     *                should always contain the {@link com.twofortyfouram.locale.Intent#EXTRA_BUNDLE} that was
+     *                saved by {@link bidoismorgan.httpevent.ui.EditActivity} and later broadcast by Locale.
      */
     @Override
-    public void onReceive(final Context context, final Intent intent)
-    {
+    public void onReceive(final Context context, final Intent intent) {
         /*
          * Always be strict on input parameters! A malicious third-party app could send a malformed Intent.
          */
-
-        if (!com.twofortyfouram.locale.Intent.ACTION_QUERY_CONDITION.equals(intent.getAction()))
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+        if (!com.twofortyfouram.locale.Intent.ACTION_QUERY_CONDITION.equals(intent.getAction())) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format(Locale.US, "Received unexpected Intent action %s", intent.getAction())); //$NON-NLS-1$
             }
@@ -64,39 +59,38 @@ public final class QueryReceiver extends BroadcastReceiver
         final Bundle bundle = intent.getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE);
         BundleScrubber.scrub(bundle);
 
+        Log.v(Constants.LOG_TAG, "event name = " + intent.getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB)); //$NON-NLS-1$
+
         final int messageID = TaskerPlugin.Event.retrievePassThroughMessageID(intent);
 
-        if (PluginBundleManager.isBundleValid(bundle))
-        {
+        if (PluginBundleManager.isBundleValid(bundle)) {
             final boolean isScreenOn =
                     (((PowerManager) context.getSystemService(Context.POWER_SERVICE)).isScreenOn());
             final boolean conditionState = bundle.getBoolean(PluginBundleManager.BUNDLE_EXTRA_BOOLEAN_STATE);
 
-            if (Constants.IS_LOGGABLE)
-            {
-                Log.v(Constants.LOG_TAG,
-                        String.format(Locale.US,
-                                "Screen state is %b and condition state is %b", isScreenOn, conditionState)); //$NON-NLS-1$
-            }
+//            if (Constants.IS_LOGGABLE) {
+//                Log.v(Constants.LOG_TAG,
+//                        String.format(Locale.US,
+//                                "Screen state is %b and condition state is %b", isScreenOn, conditionState)); //$NON-NLS-1$
+//            }
 
-            if ( messageID == -1 )
-                setResultCode( com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNKNOWN );
+            if (messageID == -1)
+                setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNKNOWN);
             else {
-                /*if (isScreenOn) {
-                    if (conditionState) {
-                        setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_SATISFIED);
-                    } else {
-                        setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNSATISFIED);
-                    }
-                } else {
-                    if (conditionState) {
-                        setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNSATISFIED);
-                    } else {
-                        setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_SATISFIED);
-                    }
-                }*/
+                Log.v(Constants.LOG_TAG, "current msgID = " + messageID); //$NON-NLS-1$
 
-                setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_SATISFIED);
+                Bundle dataBundle = TaskerPlugin.Event.retrievePassThroughData(intent);
+
+                String buf = (String) dataBundle.get(PluginBundleManager.BUNDLE_EXTRA_STRING_URL);
+
+                String eventName = intent.getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB);
+                Log.v(Constants.LOG_TAG, "event name = " + eventName + " vs url = " + buf); //$NON-NLS-1$
+
+                if (buf == null || !buf.equals(eventName)) {
+                    setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNSATISFIED);
+                } else {
+                    setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_SATISFIED);
+                }
             }
 
             /*
@@ -113,7 +107,7 @@ public final class QueryReceiver extends BroadcastReceiver
              * sent to the service.
              */
             context.startService(new Intent(context, BackgroundService.class).putExtra(BackgroundService.EXTRA_BOOLEAN_WAS_SCREEN_ON,
-                                                                                       isScreenOn));
+                    isScreenOn));
         }
     }
 }
