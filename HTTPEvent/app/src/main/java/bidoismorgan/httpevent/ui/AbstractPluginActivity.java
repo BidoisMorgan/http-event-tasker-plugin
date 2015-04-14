@@ -30,8 +30,7 @@ import bidoismorgan.httpevent.R;
  * Superclass for plug-in Activities. This class takes care of initializing aspects of the plug-in's UI to
  * look more integrated with the plug-in host.
  */
-public abstract class AbstractPluginActivity extends Activity
-{
+public abstract class AbstractPluginActivity extends Activity {
     /**
      * Flag boolean that can only be set to true via the "Don't Save"
      * {@link com.twofortyfouram.locale.platform.R.id#twofortyfouram_locale_menu_dontsave} menu item in
@@ -43,58 +42,45 @@ public abstract class AbstractPluginActivity extends Activity
     private boolean mIsCancelled = false;
 
     @Override
-    protected void onCreate(final Bundle savedInstanceState)
-    {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-        {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             setupTitleApi11();
-        }
-        else
-        {
+        } else {
             setTitle(BreadCrumber.generateBreadcrumb(getApplicationContext(), getIntent(),
                     getString(R.string.plugin_name)));
         }
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void setupTitleApi11()
-    {
+    private void setupTitleApi11() {
         CharSequence callingApplicationLabel = null;
-        try
-        {
+        try {
             callingApplicationLabel =
                     getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(getCallingPackage(),
-                                                                                                   0));
-        }
-        catch (final NameNotFoundException e)
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+                            0));
+        } catch (final NameNotFoundException e) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG, "Calling package couldn't be found", e); //$NON-NLS-1$
             }
         }
-        if (null != callingApplicationLabel)
-        {
+        if (null != callingApplicationLabel) {
             setTitle(callingApplicationLabel);
         }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(final Menu menu)
-    {
+    public boolean onCreateOptionsMenu(final Menu menu) {
         super.onCreateOptionsMenu(menu);
 
         getMenuInflater().inflate(R.menu.twofortyfouram_locale_help_save_dontsave, menu);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-        {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             setupActionBarApi11();
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-        {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             setupActionBarApi14();
         }
 
@@ -102,15 +88,13 @@ public abstract class AbstractPluginActivity extends Activity
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void setupActionBarApi11()
-    {
+    private void setupActionBarApi11() {
         getActionBar().setSubtitle(BreadCrumber.generateBreadcrumb(getApplicationContext(), getIntent(),
                 getString(R.string.plugin_name)));
     }
 
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-    private void setupActionBarApi14()
-    {
+    private void setupActionBarApi14() {
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
         /*
@@ -121,37 +105,27 @@ public abstract class AbstractPluginActivity extends Activity
          * In practice, the chances that the host will be uninstalled while the plug-in UI is running are very
          * slim.
          */
-        try
-        {
+        try {
             getActionBar().setIcon(getPackageManager().getApplicationIcon(getCallingPackage()));
-        }
-        catch (final NameNotFoundException e)
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+        } catch (final NameNotFoundException e) {
+            if (Constants.IS_LOGGABLE) {
                 Log.w(Constants.LOG_TAG, "An error occurred loading the host's icon", e); //$NON-NLS-1$
             }
         }
     }
 
     @Override
-    public boolean onMenuItemSelected(final int featureId, final MenuItem item)
-    {
+    public boolean onMenuItemSelected(final int featureId, final MenuItem item) {
         final int id = item.getItemId();
 
-        if (android.R.id.home == id)
-        {
+        if (android.R.id.home == id) {
             finish();
             return true;
-        }
-        else if (R.id.twofortyfouram_locale_menu_dontsave == id)
-        {
+        } else if (R.id.twofortyfouram_locale_menu_dontsave == id) {
             mIsCancelled = true;
             finish();
             return true;
-        }
-        else if (R.id.twofortyfouram_locale_menu_save == id)
-        {
+        } else if (R.id.twofortyfouram_locale_menu_save == id) {
             finish();
             return true;
         }
@@ -165,8 +139,7 @@ public abstract class AbstractPluginActivity extends Activity
      *
      * @return True if the Activity was canceled. False if the Activity was not canceled.
      */
-    protected boolean isCanceled()
-    {
+    protected boolean isCanceled() {
         return mIsCancelled;
     }
 }

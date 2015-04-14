@@ -22,13 +22,12 @@ import bidoismorgan.httpevent.Constants;
 /**
  * Class for managing the {@link com.twofortyfouram.locale.Intent#EXTRA_BUNDLE} for this plug-in.
  */
-public final class PluginBundleManager
-{
+public final class PluginBundleManager {
     public static final String BASE_EXTRA_BUNDLE = "com.bidoismorgan.extra.";
 
     /**
      * Type: {@code boolean}.
-     * <p>
+     * <p/>
      * True means display is on. False means off.
      */
     public static final String BUNDLE_EXTRA_BOOLEAN_STATE =
@@ -36,7 +35,7 @@ public final class PluginBundleManager
 
     /**
      * Type: {@code int}.
-     * <p>
+     * <p/>
      * versionCode of the plug-in that saved the Bundle.
      */
     /*
@@ -49,44 +48,38 @@ public final class PluginBundleManager
 
     /**
      * Type: {@code int}.
-     * <p>
+     * <p/>
      * Int representing PORT
      */
-    public static final String BUNDLE_EXTRA_INT_PORT =  BASE_EXTRA_BUNDLE + "INT_PORT"; //$NON-NLS-1$
+    public static final String BUNDLE_EXTRA_INT_PORT = BASE_EXTRA_BUNDLE + "INT_PORT"; //$NON-NLS-1$
 
     public static final String BUNDLE_EXTRA_STRING_URL = BASE_EXTRA_BUNDLE + "STRING_URL";
 
     /**
      * Method to verify the content of the bundle are correct.
-     * <p>
+     * <p/>
      * This method will not mutate {@code bundle}.
      *
      * @param bundle bundle to verify. May be null, which will always return false.
      * @return true if the Bundle is valid, false if the bundle is invalid.
      */
-    public static boolean isBundleValid(final Bundle bundle)
-    {
-        if (null == bundle)
-        {
+    public static boolean isBundleValid(final Bundle bundle) {
+        if (null == bundle) {
             return false;
         }
 
         /*
          * Make sure the expected extras exist
          */
-        if (!bundle.containsKey(BUNDLE_EXTRA_BOOLEAN_STATE))
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+        if (!bundle.containsKey(BUNDLE_EXTRA_BOOLEAN_STATE)) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format("bundle must contain extra %s", BUNDLE_EXTRA_BOOLEAN_STATE)); //$NON-NLS-1$
             }
             return false;
         }
-        if (!bundle.containsKey(BUNDLE_EXTRA_INT_VERSION_CODE))
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+        if (!bundle.containsKey(BUNDLE_EXTRA_INT_VERSION_CODE)) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format("bundle must contain extra %s", BUNDLE_EXTRA_INT_VERSION_CODE)); //$NON-NLS-1$
             }
@@ -98,10 +91,8 @@ public final class PluginBundleManager
          * extras above so that the error message is more useful. (E.g. the caller will see what extras are
          * missing, rather than just a message that there is the wrong number).
          */
-        if (2 != bundle.keySet().size())
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+        if (2 != bundle.keySet().size()) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format("bundle must contain 2 keys, but currently contains %d keys: %s", bundle.keySet().size(), bundle.keySet())); //$NON-NLS-1$
             }
@@ -112,10 +103,8 @@ public final class PluginBundleManager
          * Make sure the extra is the correct type
          */
         if (bundle.getBoolean(BUNDLE_EXTRA_BOOLEAN_STATE, true) != bundle.getBoolean(BUNDLE_EXTRA_BOOLEAN_STATE,
-                                                                                     false))
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+                false)) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format("bundle extra %s appears to be the wrong type.  It must be a boolean", BUNDLE_EXTRA_BOOLEAN_STATE)); //$NON-NLS-1$
             }
@@ -126,10 +115,8 @@ public final class PluginBundleManager
         /*
          * Make sure the extra is the correct type
          */
-        if (bundle.getInt(BUNDLE_EXTRA_INT_VERSION_CODE, 0) != bundle.getInt(BUNDLE_EXTRA_INT_VERSION_CODE, 1))
-        {
-            if (Constants.IS_LOGGABLE)
-            {
+        if (bundle.getInt(BUNDLE_EXTRA_INT_VERSION_CODE, 0) != bundle.getInt(BUNDLE_EXTRA_INT_VERSION_CODE, 1)) {
+            if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format("bundle extra %s appears to be the wrong type.  It must be an int", BUNDLE_EXTRA_INT_VERSION_CODE)); //$NON-NLS-1$
             }
@@ -141,12 +128,11 @@ public final class PluginBundleManager
     }
 
     /**
-     * @param context Application context.
+     * @param context     Application context.
      * @param isDisplayOn True if the plug-in detects when the display is on.
      * @return A plug-in bundle.
      */
-    public static Bundle generateBundle(final Context context, final boolean isDisplayOn)
-    {
+    public static Bundle generateBundle(final Context context, final boolean isDisplayOn) {
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putBoolean(BUNDLE_EXTRA_BOOLEAN_STATE, isDisplayOn);
@@ -155,12 +141,11 @@ public final class PluginBundleManager
     }
 
     /**
-     * @param context Application context.
+     * @param context  Application context.
      * @param paramInt
      * @return A plug-in bundle.
      */
-    public static Bundle generateBundle(final Context context, final int paramInt)
-    {
+    public static Bundle generateBundle(final Context context, final int paramInt) {
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putInt(BUNDLE_EXTRA_INT_PORT, paramInt);
@@ -181,8 +166,7 @@ public final class PluginBundleManager
      *
      * @throws UnsupportedOperationException because this class cannot be instantiated.
      */
-    private PluginBundleManager()
-    {
+    private PluginBundleManager() {
         throw new UnsupportedOperationException("This class is non-instantiable"); //$NON-NLS-1$
     }
 }
