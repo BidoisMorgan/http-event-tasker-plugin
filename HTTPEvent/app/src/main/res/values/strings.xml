@@ -7,4 +7,7 @@
     <string name="lbl_addr">IP Address :</string>
     <string name="lbl_port">Port :</string>
     <string name="lbl_name">Nom évènement :</string>
+    <string name="lbl_filter">Filtres :</string>
+    <string name="btn_lbl_new_filter">Ajouter filtre</string>
+    <string name="btn_lbl_delete_filter">Supprimer</string>
 </resources>

@@ -5,12 +5,17 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 
 import bidoismorgan.httpevent.Constants;
@@ -23,8 +28,8 @@ import bidoismorgan.httpevent.bundle.PluginBundleManager;
 public class EditActivity extends AbstractPluginActivity {
 
     private static int PORT = 8765;
-
     private EditText editName;
+    private ListFilterAdapter listAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +41,19 @@ public class EditActivity extends AbstractPluginActivity {
 
         TextView txtPort = (TextView) findViewById(R.id.txt_port);
         txtPort.setText(Integer.toString(PORT));
+
+        listAdapter = new ListFilterAdapter(this);
+        ListView listFilterView = (ListView) findViewById(R.id.list_view_filter);
+        listFilterView.setAdapter(listAdapter);
+        listFilterView.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+
+        Button btnAdd = (Button) findViewById(R.id.btn_new_filter);
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listAdapter.add("");
+            }
+        });
 
         editName = (EditText) findViewById(R.id.edit_txt_name);
     }

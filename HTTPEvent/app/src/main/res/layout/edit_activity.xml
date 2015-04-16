@@ -49,17 +49,42 @@
         android:layout_below="@+id/txt_lbl_port"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="24dp"
-        android:textSize="@dimen/abc_text_size_body_1_material" />
+        android:layout_marginTop="24dp" />
 
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/edit_txt_name"
         android:inputType="none"
-        android:textSize="@dimen/abc_text_size_body_1_material"
         android:layout_alignTop="@+id/txt_lbl_name"
         android:layout_toRightOf="@+id/txt_lbl_name"
         android:layout_toEndOf="@+id/txt_lbl_name" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/txt_lbl_filter"
+        android:layout_below="@+id/edit_txt_name"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="44dp"
+        android:text="@string/lbl_filter" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_lbl_new_filter"
+        android:id="@+id/btn_new_filter"
+        android:layout_alignTop="@+id/txt_lbl_filter"
+        android:layout_centerHorizontal="true" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/list_view_filter"
+        android:layout_below="@+id/btn_new_filter"
+        android:layout_toRightOf="@+id/txt_lbl_filter"
+        android:layout_toEndOf="@+id/txt_lbl_filter" />
 
 </RelativeLayout>
