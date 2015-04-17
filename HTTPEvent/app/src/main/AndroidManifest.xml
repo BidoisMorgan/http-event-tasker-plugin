@@ -7,7 +7,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="bidoismorgan.httpevent"
+    package="taskerplugin.httpevent"
     android:installLocation="internalOnly">
 
     <!-- This permission is required to keep the phone awake until the service can start.  Not all plug-in conditions will need this permission.  If all of the plug-in's work can be completed in the BroadcastReceiver, then WakeLocks aren't needed. -->
@@ -25,29 +25,18 @@
         android:xlargeScreens="true" />
 
     <application
-        android:name=".PluginApplication"
+        android:name="taskerplugin.httpevent.PluginApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
-
-    <!-- <activity
-         android:name=".ui.EditActivity"
-         android:label="@string/app_name" >
-         <intent-filter>
-             <action android:name="android.intent.action.MAIN" />
-
-             <category android:name="android.intent.category.LAUNCHER" />
-         </intent-filter>
-     </activity>
- </application>-->
 
         <!--
              If this plug-in does not stand alone (e.g. it is only a plug-in for Locale and does not have a Launcher Activity), including this in the manifest
             will help when users tap the "Open" button in the Google Play store.
         -->
         <activity
-            android:name=".ui.InfoActivity"
+            android:name="taskerplugin.httpevent.ui.InfoActivity"
             android:exported="true"
             tools:ignore="ExportedActivity" >
             <intent-filter>
@@ -65,7 +54,7 @@
                  - The Activity requires permissions not available to Locale
         -->
         <activity
-            android:name=".ui.EditActivity"
+            android:name="taskerplugin.httpevent.ui.EditActivity"
             android:exported="true"
             android:label="@string/plugin_name"
             android:theme="@style/Theme.Locale.Light"
@@ -84,7 +73,7 @@
                  - There are multiple BroadcastReceivers for com.twofortyfouram.locale.intent.action.QUERY_CONDITION
         -->
         <receiver
-            android:name=".receiver.QueryReceiver"
+            android:name="taskerplugin.httpevent.receiver.QueryReceiver"
             android:exported="true"
             android:process=":background"
             tools:ignore="ExportedReceiver">
@@ -100,7 +89,7 @@
             implementation detail of the plug-in.
         -->
         <service
-            android:name=".receiver.BackgroundService"
+            android:name="taskerplugin.httpevent.receiver.BackgroundService"
             android:exported="false"
             android:process=":background" />
 

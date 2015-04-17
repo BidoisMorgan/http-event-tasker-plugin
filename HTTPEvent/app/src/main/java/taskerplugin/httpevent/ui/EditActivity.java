@@ -1,29 +1,16 @@
-package bidoismorgan.httpevent.ui;
+package taskerplugin.httpevent.ui;
 
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.text.format.Formatter;
-import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
 
-import bidoismorgan.httpevent.Constants;
-import bidoismorgan.httpevent.R;
-import bidoismorgan.httpevent.bundle.PluginBundleManager;
+import taskerplugin.httpevent.R;
+import taskerplugin.httpevent.bundle.PluginBundleManager;
 
 /**
  * Created by Bidois Morgan on 01/04/15.

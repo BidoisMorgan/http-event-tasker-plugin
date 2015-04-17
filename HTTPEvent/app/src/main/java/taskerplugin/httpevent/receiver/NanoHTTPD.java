@@ -1,4 +1,4 @@
-package bidoismorgan.httpevent.receiver;
+package taskerplugin.httpevent.receiver;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package bidoismorgan.httpevent.receiver;
+package taskerplugin.httpevent.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
-import bidoismorgan.httpevent.Constants;
-import bidoismorgan.httpevent.TaskerPlugin;
-import bidoismorgan.httpevent.bundle.BundleScrubber;
-import bidoismorgan.httpevent.bundle.PluginBundleManager;
+import taskerplugin.httpevent.Constants;
+import taskerplugin.httpevent.TaskerPlugin;
+import taskerplugin.httpevent.bundle.BundleScrubber;
+import taskerplugin.httpevent.bundle.PluginBundleManager;
 
 /**
  * This is the "query" BroadcastReceiver for a Locale Plug-in condition.
@@ -40,7 +40,7 @@ public final class QueryReceiver extends BroadcastReceiver {
      * @param context {@inheritDoc}.
      * @param intent  the incoming {@link com.twofortyfouram.locale.Intent#ACTION_QUERY_CONDITION} Intent. This
      *                should always contain the {@link com.twofortyfouram.locale.Intent#EXTRA_BUNDLE} that was
-     *                saved by {@link bidoismorgan.httpevent.ui.EditActivity} and later broadcast by Locale.
+     *                saved by {@link taskerplugin.httpevent.ui.EditActivity} and later broadcast by Locale.
      */
     @Override
     public void onReceive(final Context context, final Intent intent) {

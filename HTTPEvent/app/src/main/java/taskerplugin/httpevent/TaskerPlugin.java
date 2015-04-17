@@ -1,6 +1,6 @@
 //package com.yourcompany.yourcondition;
 //package com.yourcompany.yoursetting;
-package bidoismorgan.httpevent;
+package taskerplugin.httpevent;
 
 // Constants and functions for Tasker *extensions* to the plugin protocol
 // See Also: http://tasker.dinglisch.net/plugins.html

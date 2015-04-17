@@ -10,14 +10,14 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package bidoismorgan.httpevent.receiver;
+package taskerplugin.httpevent.receiver;
 
 import android.content.Context;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 
-import bidoismorgan.httpevent.Constants;
+import taskerplugin.httpevent.Constants;
 
 
 /**

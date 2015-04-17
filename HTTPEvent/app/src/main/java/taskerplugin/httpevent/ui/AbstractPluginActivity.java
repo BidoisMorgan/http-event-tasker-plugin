@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package bidoismorgan.httpevent.ui;
+package taskerplugin.httpevent.ui;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -23,8 +23,8 @@ import android.view.MenuItem;
 
 import com.twofortyfouram.locale.BreadCrumber;
 
-import bidoismorgan.httpevent.Constants;
-import bidoismorgan.httpevent.R;
+import taskerplugin.httpevent.Constants;
+import taskerplugin.httpevent.R;
 
 /**
  * Superclass for plug-in Activities. This class takes care of initializing aspects of the plug-in's UI to

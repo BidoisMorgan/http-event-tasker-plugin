@@ -10,15 +10,13 @@
  * See the License for the specific language governing permissions and limitations under the License.
  */
 
-package bidoismorgan.httpevent.receiver;
+package taskerplugin.httpevent.receiver;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -32,10 +30,10 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.TreeMap;
 
-import bidoismorgan.httpevent.Constants;
-import bidoismorgan.httpevent.TaskerPlugin;
-import bidoismorgan.httpevent.bundle.PluginBundleManager;
-import bidoismorgan.httpevent.ui.EditActivity;
+import taskerplugin.httpevent.Constants;
+import taskerplugin.httpevent.TaskerPlugin;
+import taskerplugin.httpevent.bundle.PluginBundleManager;
+import taskerplugin.httpevent.ui.EditActivity;
 
 /**
  * {@code Service} for monitoring the {@code REGISTERED_RECEIVER_ONLY} {@code Intent}s
