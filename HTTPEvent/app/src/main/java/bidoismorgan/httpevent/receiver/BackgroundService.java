@@ -46,7 +46,6 @@ public final class BackgroundService extends Service {
     /*
      * REPRESENTATION INVARIANTS:
      * - INTENT_REQUEST_REQUERY must not be mutated after it is initialized
-     * - mReceiver is registered only while the service is running
      */
     //@formatter:on
 
@@ -62,23 +61,10 @@ public final class BackgroundService extends Service {
             new Intent(com.twofortyfouram.locale.Intent.ACTION_REQUEST_QUERY).putExtra(com.twofortyfouram.locale.Intent.EXTRA_ACTIVITY,
                     EditActivity.class.getName());
 
-    /**
-     * Type: {@code boolean}.
-     * <p/>
-     * State of the display prior to the request to start the service.
-     */
-    /* package */static final String EXTRA_BOOLEAN_WAS_SCREEN_ON = BackgroundService.class.getName()
-            + ".extra.BOOLEAN_WAS_SCREEN_ON"; //$NON-NLS-1$
 
     /**
-     * A {@code BroadcastReceiver} to monitor {@link android.content.Intent#ACTION_SCREEN_ON} and
-     * {@link android.content.Intent#ACTION_SCREEN_OFF}. Assigned/registered in {@link #onCreate()} and
-     * unregistered/dereferenced in {@link #onDestroy()}.
+     * Server HTTP
      */
-    private BroadcastReceiver mReceiver;
-
-    private static Handler handler = new Handler();
-
     private NanoHTTPD mHTTPD;
 
 
@@ -94,7 +80,6 @@ public final class BackgroundService extends Service {
         /*
          * Listen continuously for screen Intents
          */
-        //mReceiver = new DisplayReceiver();
         try {
             WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
             int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
@@ -151,8 +136,6 @@ public final class BackgroundService extends Service {
 
         mHTTPD.stop();
         mHTTPD = null;
-        //unregisterReceiver(mReceiver);
-        //mReceiver = null;
     }
 
     public String getLocalIpAddress() {
@@ -174,37 +157,46 @@ public final class BackgroundService extends Service {
         return null;
     }
 
-    /**
-     * A subclass of BroadcastReceiver that will always send a re-query Intent to Locale when it receives an
-     * Intent.
-     * <p/>
-     * This BroadcastReceiver is intended to be registered with the {@link android.content.Intent#ACTION_SCREEN_ON} and
-     * {@link android.content.Intent#ACTION_SCREEN_OFF} actions.
-     */
-    private static final class DisplayReceiver extends BroadcastReceiver {
-        /**
-         * Constructs a new DisplayReceiver
-         */
-        public DisplayReceiver() {
-            super();
+    private static final class MyHTTPD extends NanoHTTPD {
+
+        private static final int PORT = 8765;
+        private Context context;
+
+        public MyHTTPD(String ipAddr, Context c) throws IOException {
+            super(ipAddr, PORT);
+            context = c;
         }
 
         @Override
-        public void onReceive(final Context context, final Intent intent) {
-            if (Constants.IS_LOGGABLE) {
-                Log.v(Constants.LOG_TAG, String.format("Received %s", intent)); //$NON-NLS-1$
+        public Response serve(String uri, Method method, Map<String, String> headers, Map<String, String> parms,
+                              Map<String, String> files) {
+            final StringBuilder buf = new StringBuilder();
+
+            buf.append("Header<br>");
+            for (Map.Entry<String, String> kv : headers.entrySet()) {
+                buf.append(kv.getKey() + " : " + kv.getValue() + "\n");
             }
 
-            /*
-             * Ignore the initial sticky Intent
-             */
-            if (isInitialStickyBroadcast()) {
-                return;
+            buf.append("<br>----<br>");
+
+            buf.append("method = " + method + "<br>");
+            buf.append("uri = " + uri + "<br>");
+
+            buf.append("Params<br>");
+            for (Map.Entry<String, String> p : parms.entrySet()) {
+                buf.append(p.getKey() + " : " + p.getValue() + "<br>");
             }
+
+            final String html = "<html><head><head><body><h1>Hello, World</h1></body>" + buf + "</html>";
 
             TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
 
-            /*
+            TreeMap<String, String> tree = new TreeMap<String, String>(parms);
+
+            Bundle dataBundle = PluginBundleManager.generateURLBundle(context, parms.get("NanoHttpd.QUERY_STRING"));
+            TaskerPlugin.Event.addPassThroughData(INTENT_REQUEST_REQUERY, dataBundle);
+
+             /*
              * Ask Locale to re-query our condition instances. Note: this plug-in does not keep track of what
              * types of conditions have been set up. While executing this code, this Condition has no idea
              * whether there are even any Display conditions within Locale or whether those conditions are
@@ -225,53 +217,42 @@ public final class BackgroundService extends Service {
              * Locale.
              */
             context.sendBroadcast(INTENT_REQUEST_REQUERY);
-        }
-    }
-
-    private static final class MyHTTPD extends NanoHTTPD {
-
-        private static final int PORT = 8765;
-        private Context context;
-
-        public MyHTTPD(String ipAddr, Context c) throws IOException {
-            super(ipAddr, PORT);
-            context = c;
-        }
-
-        @Override
-        public Response serve(String uri, Method method, Map<String, String> headers, Map<String, String> parms,
-                              Map<String, String> files) {
-            final StringBuilder buf = new StringBuilder();
-
-            buf.append("Header\n");
-            for (Map.Entry<String, String> kv : headers.entrySet()) {
-                buf.append(kv.getKey() + " : " + kv.getValue() + "\n");
-            }
-
-            buf.append("----\n");
-
-            buf.append("method = " + method + "\n");
-            buf.append("uri = " + uri + "\n");
-
-            buf.append("Params\n");
-            for (Map.Entry<String, String> p : parms.entrySet()) {
-                buf.append(p.getKey() + " : " + p.getValue() + "\n");
-            }
-
-            final String html = "<html><head><head><body><h1>Hello, World</h1></body>" + buf + "</html>";
-
-            TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
-
-            TreeMap<String, String> tree = new TreeMap<String, String>(parms);
-
-            Bundle dataBundle = PluginBundleManager.generateURLBundle(context, tree.get(tree.lastKey()));
-
-            TaskerPlugin.Event.addPassThroughData(INTENT_REQUEST_REQUERY, dataBundle);
-
-            context.sendBroadcast(INTENT_REQUEST_REQUERY);
 
             return new Response(Response.Status.OK, MIME_HTML, html);
         }
+
+//        @Override
+//        public NanoHTTPD.Response serve(NanoHTTPD.IHTTPSession session) {
+//            final StringBuilder buf = new StringBuilder();
+//
+//            buf.append("Header\n");
+//            for (Map.Entry<String, String> kv : session.getHeaders().entrySet()) {
+//                buf.append(kv.getKey() + " : " + kv.getValue() + "\n");
+//            }
+//
+//            buf.append("----\n");
+//
+//            buf.append("method = " + session.getMethod() + "\n");
+//            buf.append("uri = " + session.getUri() + "\n");
+//
+//            buf.append("Params :\n");
+//            for (Map.Entry<String, String> p : session.getParms().entrySet()) {
+//                buf.append(p.getKey() + " : " + p.getValue() + "\n");
+//            }
+//
+//            final String html = "<html><head><head><body><h1>Hello, World</h1></body>" + buf + "</html>";
+//
+//            TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
+//
+//            TreeMap<String, String> tree = new TreeMap<String, String>(session.getParms());
+//
+////            Bundle dataBundle = PluginBundleManager.generateURLBundle(context, tree.get(tree.lastKey()));
+////            TaskerPlugin.Event.addPassThroughData(INTENT_REQUEST_REQUERY, dataBundle);
+//
+//            context.sendBroadcast(INTENT_REQUEST_REQUERY);
+//
+//            return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, MIME_HTML, html);
+//        }
 
     }
 }

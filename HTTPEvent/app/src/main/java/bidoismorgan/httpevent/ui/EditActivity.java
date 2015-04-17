@@ -16,7 +16,10 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
 
 import bidoismorgan.httpevent.Constants;
 import bidoismorgan.httpevent.R;
@@ -29,7 +32,7 @@ public class EditActivity extends AbstractPluginActivity {
 
     private static int PORT = 8765;
     private EditText editName;
-    private ListFilterAdapter listAdapter;
+    private EditText editFilters;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,20 +45,23 @@ public class EditActivity extends AbstractPluginActivity {
         TextView txtPort = (TextView) findViewById(R.id.txt_port);
         txtPort.setText(Integer.toString(PORT));
 
-        listAdapter = new ListFilterAdapter(this);
-        ListView listFilterView = (ListView) findViewById(R.id.list_view_filter);
-        listFilterView.setAdapter(listAdapter);
-        listFilterView.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
-
-        Button btnAdd = (Button) findViewById(R.id.btn_new_filter);
-        btnAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                listAdapter.add("");
-            }
-        });
-
         editName = (EditText) findViewById(R.id.edit_txt_name);
+        editFilters = (EditText) findViewById(R.id.edit_txt_filters);
+
+        if (getIntent().getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB) != null) {
+            editName.setText(getIntent().getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB));
+        }
+
+        if (getIntent().getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE) != null) {
+            ArrayList<String> filters = getIntent().getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE).getStringArrayList(PluginBundleManager.BUNDLE_EXTRA_STRINGS_FILTERS);
+            if (filters != null) {
+                String stringFilters = "";
+                for (String f : filters) {
+                    stringFilters += f + "\n";
+                }
+                editFilters.setText(stringFilters);
+            }
+        }
     }
 
     @Override
@@ -63,9 +69,14 @@ public class EditActivity extends AbstractPluginActivity {
         final Intent resultIntent = new Intent();
 
         String eventName = "Default";
+        ArrayList<String> filters = new ArrayList<>();
 
-        if (!editName.getText().equals("")) {
+        if (!editName.getText().toString().equals("")) {
             eventName = String.valueOf(editName.getText());
+        }
+
+        if (!editFilters.getText().toString().equals("")) {
+            filters = new ArrayList<>(Arrays.asList(editFilters.getText().toString().split("[\\r\\n]+")));
         }
 
         /*
@@ -76,7 +87,7 @@ public class EditActivity extends AbstractPluginActivity {
          * Android platform objects (A Serializable class private to this plug-in's APK cannot be
          * stored in the Bundle, as Locale's classloader will not recognize it).
          */
-        final Bundle resultBundle = PluginBundleManager.generateBundle(getApplicationContext(), true);
+        final Bundle resultBundle = PluginBundleManager.generateBundle(getApplicationContext(), filters);
         resultIntent.putExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE, resultBundle);
 
         /*

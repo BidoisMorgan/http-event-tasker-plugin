@@ -16,6 +16,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 import bidoismorgan.httpevent.Constants;
 
 
@@ -24,14 +26,6 @@ import bidoismorgan.httpevent.Constants;
  */
 public final class PluginBundleManager {
     public static final String BASE_EXTRA_BUNDLE = "com.bidoismorgan.extra.";
-
-    /**
-     * Type: {@code boolean}.
-     * <p/>
-     * True means display is on. False means off.
-     */
-    public static final String BUNDLE_EXTRA_BOOLEAN_STATE =
-            "com.yourcompany.yourcondition.extra.BOOLEAN_STATE"; //$NON-NLS-1$
 
     /**
      * Type: {@code int}.
@@ -44,7 +38,7 @@ public final class PluginBundleManager {
      * having the version, the plug-in can better detect when such bugs occur.
      */
     public static final String BUNDLE_EXTRA_INT_VERSION_CODE =
-            "com.yourcompany.yourcondition.extra.INT_VERSION_CODE"; //$NON-NLS-1$
+            BASE_EXTRA_BUNDLE + "INT_VERSION_CODE"; //$NON-NLS-1$
 
     /**
      * Type: {@code int}.
@@ -52,6 +46,8 @@ public final class PluginBundleManager {
      * Int representing PORT
      */
     public static final String BUNDLE_EXTRA_INT_PORT = BASE_EXTRA_BUNDLE + "INT_PORT"; //$NON-NLS-1$
+
+    public static final String BUNDLE_EXTRA_STRINGS_FILTERS = BASE_EXTRA_BUNDLE + "STRINGS_FILTERS"; //$NON-NLS-1$
 
     public static final String BUNDLE_EXTRA_STRING_URL = BASE_EXTRA_BUNDLE + "STRING_URL";
 
@@ -71,10 +67,10 @@ public final class PluginBundleManager {
         /*
          * Make sure the expected extras exist
          */
-        if (!bundle.containsKey(BUNDLE_EXTRA_BOOLEAN_STATE)) {
+        if (!bundle.containsKey(BUNDLE_EXTRA_STRINGS_FILTERS)) {
             if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
-                        String.format("bundle must contain extra %s", BUNDLE_EXTRA_BOOLEAN_STATE)); //$NON-NLS-1$
+                        String.format("bundle must contain extra %s", BUNDLE_EXTRA_STRINGS_FILTERS)); //$NON-NLS-1$
             }
             return false;
         }
@@ -102,19 +98,6 @@ public final class PluginBundleManager {
         /*
          * Make sure the extra is the correct type
          */
-        if (bundle.getBoolean(BUNDLE_EXTRA_BOOLEAN_STATE, true) != bundle.getBoolean(BUNDLE_EXTRA_BOOLEAN_STATE,
-                false)) {
-            if (Constants.IS_LOGGABLE) {
-                Log.e(Constants.LOG_TAG,
-                        String.format("bundle extra %s appears to be the wrong type.  It must be a boolean", BUNDLE_EXTRA_BOOLEAN_STATE)); //$NON-NLS-1$
-            }
-
-            return false;
-        }
-
-        /*
-         * Make sure the extra is the correct type
-         */
         if (bundle.getInt(BUNDLE_EXTRA_INT_VERSION_CODE, 0) != bundle.getInt(BUNDLE_EXTRA_INT_VERSION_CODE, 1)) {
             if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
@@ -128,19 +111,6 @@ public final class PluginBundleManager {
     }
 
     /**
-     * @param context     Application context.
-     * @param isDisplayOn True if the plug-in detects when the display is on.
-     * @return A plug-in bundle.
-     */
-    public static Bundle generateBundle(final Context context, final boolean isDisplayOn) {
-        final Bundle result = new Bundle();
-        result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
-        result.putBoolean(BUNDLE_EXTRA_BOOLEAN_STATE, isDisplayOn);
-
-        return result;
-    }
-
-    /**
      * @param context  Application context.
      * @param paramInt
      * @return A plug-in bundle.
@@ -149,6 +119,19 @@ public final class PluginBundleManager {
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putInt(BUNDLE_EXTRA_INT_PORT, paramInt);
+
+        return result;
+    }
+
+    /**
+     * @param context  Application context.
+     * @param filters
+     * @return A plug-in bundle.
+     */
+    public static Bundle generateBundle(final Context context, final ArrayList<String> filters) {
+        final Bundle result = new Bundle();
+        result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
+        result.putStringArrayList(BUNDLE_EXTRA_STRINGS_FILTERS, filters);
 
         return result;
     }

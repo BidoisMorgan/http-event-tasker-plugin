@@ -16,10 +16,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.util.Log;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 
 import bidoismorgan.httpevent.Constants;
@@ -59,37 +60,65 @@ public final class QueryReceiver extends BroadcastReceiver {
         final Bundle bundle = intent.getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE);
         BundleScrubber.scrub(bundle);
 
-        Log.v(Constants.LOG_TAG, "event name = " + intent.getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB)); //$NON-NLS-1$
-
-        final int messageID = TaskerPlugin.Event.retrievePassThroughMessageID(intent);
-
         if (PluginBundleManager.isBundleValid(bundle)) {
-            final boolean isScreenOn =
-                    (((PowerManager) context.getSystemService(Context.POWER_SERVICE)).isScreenOn());
-            final boolean conditionState = bundle.getBoolean(PluginBundleManager.BUNDLE_EXTRA_BOOLEAN_STATE);
+            // Check if messageId in intent
+            final int messageID = TaskerPlugin.Event.retrievePassThroughMessageID(intent);
 
-//            if (Constants.IS_LOGGABLE) {
-//                Log.v(Constants.LOG_TAG,
-//                        String.format(Locale.US,
-//                                "Screen state is %b and condition state is %b", isScreenOn, conditionState)); //$NON-NLS-1$
-//            }
-
-            if (messageID == -1)
+            if (messageID == -1) {
                 setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNKNOWN);
-            else {
-                Log.v(Constants.LOG_TAG, "current msgID = " + messageID); //$NON-NLS-1$
+            } else {
 
+                if (Constants.IS_LOGGABLE) {
+                    Log.v(Constants.LOG_TAG, "--> new message : " + messageID); //$NON-NLS-1$
+                    Log.v(Constants.LOG_TAG, "Event name = " + intent.getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB)); //$NON-NLS-1$
+                }
+
+                // Get the DataBundle from the intent
                 Bundle dataBundle = TaskerPlugin.Event.retrievePassThroughData(intent);
 
-                String buf = (String) dataBundle.get(PluginBundleManager.BUNDLE_EXTRA_STRING_URL);
+                /*
+                 *   Boolean to know if parameters included in request are present in the filters
+                 *   By default at true, because if no dataBundle, there is no filters so the conditions are Ok
+                 */
+                boolean areFiltersOK = true;
 
-                String eventName = intent.getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB);
-                Log.v(Constants.LOG_TAG, "event name = " + eventName + " vs url = " + buf); //$NON-NLS-1$
+                if (dataBundle != null) {
+                    // Get the parameters included in request
+                    String URLParams = (String) dataBundle.get(PluginBundleManager.BUNDLE_EXTRA_STRING_URL);
 
-                if (buf == null || !buf.equals(eventName)) {
-                    setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNSATISFIED);
-                } else {
+                    // Get the filters from Bundle
+                    ArrayList<String> filters = bundle.getStringArrayList(PluginBundleManager.BUNDLE_EXTRA_STRINGS_FILTERS);
+
+                    if (Constants.IS_LOGGABLE) {
+                        String filterString = "";
+                        for (String f : filters) {
+                            filterString += f + "|";
+                        }
+                        Log.v(Constants.LOG_TAG, "Filtres : " + filterString); //$NON-NLS-1$
+                    }
+
+                    // Get map of parameters
+                    HashMap<String, String> mapParams = getMapParams(URLParams);
+
+                    /*
+                     * Check if all the filters are present in params KEYS
+                     * For the moment just look the presence in the keys, next add values @TODO
+                     */
+                    for (String filter : filters) {
+                        if (!mapParams.containsKey(filter)) {
+                            areFiltersOK = false;
+                        }
+                    }
+                }
+
+                if (Constants.IS_LOGGABLE) {
+                    Log.v(Constants.LOG_TAG, "Condition satsified ? -> " + areFiltersOK); //$NON-NLS-1$
+                }
+
+                if (areFiltersOK) {
                     setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_SATISFIED);
+                } else {
+                    setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNSATISFIED);
                 }
             }
 
@@ -100,14 +129,31 @@ public final class QueryReceiver extends BroadcastReceiver {
             ServiceWakeLockManager.aquireLock(context);
 
             /*
-             * To detect screen changes as they happen, a service must be running because the SCREEN_ON/OFF
-             * Intents are REGISTERED_RECEIVER_ONLY.
-             *
-             * To avoid a gap in detecting screen on/off changes, the current state of the screen needs to be
-             * sent to the service.
+             * Launch the backgroundService managing the HTTP server
              */
-            context.startService(new Intent(context, BackgroundService.class).putExtra(BackgroundService.EXTRA_BOOLEAN_WAS_SCREEN_ON,
-                    isScreenOn));
+            context.startService(new Intent(context, BackgroundService.class));
         }
+    }
+
+    /**
+     * Function to converse the Url string into map of <key,value> filters
+     *
+     * @param URLRaw : Request parameters String of the filters. Format : key1=value1&key2=value2...
+     * @return Map<String,String> of filters
+     */
+    private HashMap<String, String> getMapParams(String URLRaw) {
+        HashMap<String, String> filtersMap = new HashMap<>();
+
+        if (URLRaw != null) {
+            String[] pairs = URLRaw.split("&");
+
+            for (int i = 0; i < pairs.length; i++) {
+                String key = pairs[i].split("=")[0];
+                String value = pairs[i].split("=")[1];
+                filtersMap.put(key, value);
+            }
+        }
+
+        return filtersMap;
     }
 }
