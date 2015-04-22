@@ -19,9 +19,14 @@ import android.os.Bundle;
 import android.util.Log;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 
 import taskerplugin.httpevent.Constants;
 import taskerplugin.httpevent.TaskerPlugin;
@@ -35,6 +40,8 @@ import taskerplugin.httpevent.bundle.PluginBundleManager;
  * @see com.twofortyfouram.locale.Intent#EXTRA_BUNDLE
  */
 public final class QueryReceiver extends BroadcastReceiver {
+
+    private final static String PREFIX_TASKER_VAR_TPE = "%tpe_";
 
     /**
      * @param context {@inheritDoc}.
@@ -83,9 +90,6 @@ public final class QueryReceiver extends BroadcastReceiver {
                 boolean areFiltersOK = true;
 
                 if (dataBundle != null) {
-                    // Get the parameters included in request
-                    String URLParams = (String) dataBundle.get(PluginBundleManager.BUNDLE_EXTRA_STRING_URL);
-
                     // Get the filters from Bundle
                     ArrayList<String> filters = bundle.getStringArrayList(PluginBundleManager.BUNDLE_EXTRA_STRINGS_FILTERS);
 
@@ -97,16 +101,34 @@ public final class QueryReceiver extends BroadcastReceiver {
                         Log.v(Constants.LOG_TAG, "Filtres : " + filterString); //$NON-NLS-1$
                     }
 
-                    // Get map of parameters
-                    HashMap<String, String> mapParams = getMapParams(URLParams);
 
-                    /*
-                     * Check if all the filters are present in params KEYS
-                     * For the moment just look the presence in the keys, next add values @TODO
-                     */
-                    for (String filter : filters) {
-                        if (!mapParams.containsKey(filter)) {
-                            areFiltersOK = false;
+                    // Get the parameters included in request
+                    String URLParams = (String) dataBundle.get(PluginBundleManager.BUNDLE_EXTRA_STRING_URL);
+//                    // Get map of parameters
+//                    HashMap<String, String> mapParams = getMapParams(URLParams);
+//                    areFiltersOK = checkFilters(mapParams, filters);
+//                    // Transform the param into taskers varibales
+//                    if (TaskerPlugin.Condition.hostSupportsVariableReturn(intent.getExtras())) {
+//                        TaskerPlugin.addVariableBundle(getResultExtras(true), getBundleVariables(mapParams));
+//                    }
+
+
+                    if (URLParams != null) {
+                        try {
+                            JSONObject paramJSON = new JSONObject(URLParams);
+
+                            if (!filters.isEmpty()) {
+                                areFiltersOK = checkFilters(paramJSON, filters);
+                            }
+
+                            // Transform the param into taskers varibales
+                            if (TaskerPlugin.Condition.hostSupportsVariableReturn(intent.getExtras())) {
+                                Bundle varsBundle = new Bundle();
+                                getBundleVariables(paramJSON, varsBundle);
+                                TaskerPlugin.addVariableBundle(getResultExtras(true), varsBundle);
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -120,6 +142,7 @@ public final class QueryReceiver extends BroadcastReceiver {
                 } else {
                     setResultCode(com.twofortyfouram.locale.Intent.RESULT_CONDITION_UNSATISFIED);
                 }
+
             }
 
             /*
@@ -131,7 +154,9 @@ public final class QueryReceiver extends BroadcastReceiver {
             /*
              * Launch the backgroundService managing the HTTP server
              */
-            context.startService(new Intent(context, BackgroundService.class));
+            Intent backgroundIntent = new Intent(context, BackgroundService.class);
+            backgroundIntent.putExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE, bundle);
+            context.startService(backgroundIntent);
         }
     }
 
@@ -147,13 +172,137 @@ public final class QueryReceiver extends BroadcastReceiver {
         if (URLRaw != null) {
             String[] pairs = URLRaw.split("&");
 
+//            if (pairs.length > 1) {
             for (int i = 0; i < pairs.length; i++) {
                 String key = pairs[i].split("=")[0];
                 String value = pairs[i].split("=")[1];
                 filtersMap.put(key, value);
+//                }
             }
         }
 
         return filtersMap;
     }
+
+    /**
+     * Function to transform the parameters of the request into Tasker Variables
+     *
+     * @param params : Map of the parameters
+     * @return Bundle with the Tasker Variables
+     */
+    private Bundle getBundleVariables(HashMap<String, String> params) {
+        Bundle varsBundle = new Bundle();
+
+        for (Map.Entry<String, String> p : params.entrySet()) {
+            // Tasker variables format
+            String newVar = PREFIX_TASKER_VAR_TPE + p.getKey().toLowerCase();
+
+            // Check if correct tasker var
+            if (TaskerPlugin.variableNameValid(newVar)) {
+                if (Constants.IS_LOGGABLE) {
+                    Log.v(Constants.LOG_TAG, "Variable -> " + newVar); //$NON-NLS-1$
+                }
+                varsBundle.putString(newVar, p.getValue());
+            }
+        }
+
+        return varsBundle;
+    }
+
+    /**
+     * Function to transform the parameters of the request into Tasker Variables
+     *
+     * @param paramsJSON : JSON of the parameters
+     * @return Bundle with the Tasker Variables
+     */
+    private void getBundleVariables(JSONObject paramsJSON, Bundle varsBundle) {
+
+        Iterator<String> keys = paramsJSON.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+
+            // Tasker variables format
+            String newVar = PREFIX_TASKER_VAR_TPE + key.toLowerCase();
+
+            // Check if correct tasker var
+            if (TaskerPlugin.variableNameValid(newVar)) {
+                if (Constants.IS_LOGGABLE) {
+                    Log.v(Constants.LOG_TAG, "Variable -> " + newVar); //$NON-NLS-1$
+                }
+
+
+                if (key.equals("message")) {
+                    JSONObject innerObject = new JSONObject();
+                    try {
+                        // If key message is JSON, recall this method on it
+                        innerObject = new JSONObject((String) paramsJSON.get(key));
+                        getBundleVariables(innerObject, varsBundle);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    varsBundle.putString(newVar, paramsJSON.get(key).toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        }
+    }
+
+    /**
+     * Check if all the filters are present in params KEYS
+     * For the moment just look the presence in the keys, next add values @TODO
+     */
+    private boolean checkFilters(HashMap<String, String> mapParams, ArrayList<String> filters) {
+        for (String filter : filters) {
+            if (!mapParams.containsKey(filter)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Check if all the filters are present in params KEYS
+     * For the moment just look the presence in the keys, next add values @TODO
+     */
+    private boolean checkFilters(JSONObject paramsJSON, ArrayList<String> filters) {
+        for (int i = 0; i < filters.size(); i++) {
+            Iterator<String> keys = paramsJSON.keys();
+            boolean isFilterInParam = false;
+            while (keys.hasNext()) {
+                String key = keys.next();
+
+                if (key.equals(filters.get(i))) {
+                    isFilterInParam = true;
+                } else if (key.equals("message")) {
+                    JSONObject innerObject = new JSONObject();
+                    try {
+                        // If key message is JSON check on its own keys/value
+                        innerObject = new JSONObject((String) paramsJSON.get(key));
+                        Iterator<String> keysMsg = innerObject.keys();
+                        while (keysMsg.hasNext()) {
+                            String keyMsg = keysMsg.next();
+                            if (keyMsg.equals(filters.get(i))) {
+                                isFilterInParam = true;
+                            }
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            // If the current filter checked was not found, return false
+            if (!isFilterInParam) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 }

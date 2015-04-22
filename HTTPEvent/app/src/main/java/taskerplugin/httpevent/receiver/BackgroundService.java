@@ -22,11 +22,21 @@ import android.text.format.Formatter;
 import android.util.Log;
 
 
+import com.github.nkzawa.emitter.Emitter;
+import com.github.nkzawa.socketio.client.IO;
+import com.github.nkzawa.socketio.client.Socket;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -65,6 +75,8 @@ public final class BackgroundService extends Service {
      */
     private NanoHTTPD mHTTPD;
 
+    private SocketIOHandler mSocketHandler;
+
 
     /**
      * Flag to note when {@link #onStartCommand(android.content.Intent, int, int)} has been called.
@@ -74,6 +86,7 @@ public final class BackgroundService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.v(Constants.LOG_TAG, "CREATE SERVICE"); //$NON-NLS-1$
 
         /*
          * Listen continuously for screen Intents
@@ -85,21 +98,35 @@ public final class BackgroundService extends Service {
             final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                     (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
             mHTTPD = new MyHTTPD(formatedIpAddress, getApplication());
-            mHTTPD.start();
+//            mHTTPD.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        mSocketHandler = new SocketIOHandler(getApplication());
+//        mSocketHandler = new SocketIOHandler("http://thacthab.herokuapp.com", getApplication());
+//        mSocketHandler.connect();
     }
 
     @Override
     public int onStartCommand(final Intent intent, final int flags, final int startId) {
         super.onStartCommand(intent, flags, startId);
 
+        Log.v(Constants.LOG_TAG, "START SERVICE"); //$NON-NLS-1$
+
         /*
          * If the Intent is null, then the service is being started by Android rather than being started from
          * the BroadcastReceiver.
          */
         if (null != intent) {
+
+            Bundle dataBundle = intent.getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE);
+            String ssAddr = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_ADDR);
+            String ssLogin = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN);
+            String ssPass = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_PASS);
+
+            boolean resetSocketInfo = mSocketHandler.resetSocketInfo(ssAddr, ssLogin, ssPass);
+
             /*
              * Because Services are started from an event loop, there is a timing gap between when the
              * BroadcastReceiver checks the screen state and when the Service starts monitoring for screen
@@ -108,8 +135,22 @@ public final class BackgroundService extends Service {
              * This case is only important the first time the Service starts.
              */
             if (!mIsOnStartCommandCalled) {
-                TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
-                sendBroadcast(INTENT_REQUEST_REQUERY);
+//                TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
+//                sendBroadcast(INTENT_REQUEST_REQUERY);
+                try {
+                    mHTTPD.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+                Log.v(Constants.LOG_TAG, String.format("FISRT socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
+                mSocketHandler.setServer(ssAddr);
+                mSocketHandler.connect(ssLogin, ssPass);
+            } else if (resetSocketInfo) {
+                Log.v(Constants.LOG_TAG, String.format("RESET socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
+                mSocketHandler.setServer(ssAddr);
+                mSocketHandler.connect(ssLogin, ssPass);
             }
 
             ServiceWakeLockManager.releaseLock();
@@ -134,6 +175,10 @@ public final class BackgroundService extends Service {
 
         mHTTPD.stop();
         mHTTPD = null;
+
+        mSocketHandler.disconnect();
+        mSocketHandler.close();
+        mSocketHandler = null;
     }
 
     public String getLocalIpAddress() {
@@ -153,6 +198,38 @@ public final class BackgroundService extends Service {
             Log.e(Constants.LOG_TAG, ex.toString());
         }
         return null;
+    }
+
+    private static String transformJSONtoStringURL(JSONObject objectParams) {
+        String eq = "=";
+        String separator = "&";
+        String URLString = "";
+        Iterator<?> keys = objectParams.keys();
+
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+
+            try {
+                // test JSON attribute
+                JSONObject innerObject = new JSONObject((String) objectParams.get(key));
+                URLString += transformJSONtoStringURL(innerObject);
+            } catch (JSONException e) {
+                // If no JSON, consider as a String
+                try {
+                    URLString += key + eq + objectParams.get(key).toString();
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            if (keys.hasNext()) {
+                URLString += separator;
+            }
+
+        }
+
+        Log.v(Constants.LOG_TAG, "URL String built = " + URLString); //$NON-NLS-1$
+        return URLString;
     }
 
     private static final class MyHTTPD extends NanoHTTPD {
@@ -189,9 +266,19 @@ public final class BackgroundService extends Service {
 
             TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
 
-            TreeMap<String, String> tree = new TreeMap<String, String>(parms);
+            HashMap<String, String> mapBis = new HashMap<>(parms);
+            mapBis.remove("NanoHttpd.QUERY_STRING");
 
-            Bundle dataBundle = PluginBundleManager.generateURLBundle(context, parms.get("NanoHttpd.QUERY_STRING"));
+            JSONObject o = new JSONObject();
+            for (Map.Entry<String, String> param : mapBis.entrySet()) {
+                try {
+                    o.put(param.getKey(), param.getValue());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            Log.v(Constants.LOG_TAG, "JSON envoyé : " + o.toString());
+            Bundle dataBundle = PluginBundleManager.generateURLBundle(context, o.toString());
             TaskerPlugin.Event.addPassThroughData(INTENT_REQUEST_REQUERY, dataBundle);
 
              /*
@@ -251,6 +338,165 @@ public final class BackgroundService extends Service {
 //
 //            return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, MIME_HTML, html);
 //        }
+
+    }
+
+    private static final class SocketIOHandler {
+
+        private com.github.nkzawa.socketio.client.Socket socket;
+        private Context context;
+        private String host;
+        private String login;
+        private String pass;
+
+        public SocketIOHandler(String host, Context ctxt) {
+            try {
+                this.context = ctxt;
+                // Initialize socket with the host
+                this.socket = IO.socket(host);
+                Log.v(Constants.LOG_TAG, "Constructeur socket handler"); //$NON-NLS-1$
+                this.configureSocket(socket);
+
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public SocketIOHandler(Context ctxt) {
+            this.context = ctxt;
+            // Initialize socket with the host
+            Log.v(Constants.LOG_TAG, "Constructeur socket handler"); //$NON-NLS-1$
+//            this.configureSocket(socket);
+        }
+
+        public void setServer(String host) {
+            if (this.host == null) {
+                this.host = host;
+                try {
+                    this.socket = IO.socket(this.host);
+                    this.configureSocket(socket);
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                if (this.socket.connected()) {
+                    this.socket.disconnect();
+                }
+                try {
+                    this.socket = IO.socket(this.host);
+                    this.configureSocket(socket);
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            /* else if (!this.host.equals(host)) {
+                if (this.socket.connected()) {
+                    this.socket.disconnect();
+                }
+                try {
+                    this.socket = IO.socket(this.host);
+                    this.configureSocket(socket);
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+            } */
+        }
+
+        public void connect(String login, String pass) {
+            this.login = login;
+            this.pass = pass;
+
+            if (!this.socket.connected()) {
+                Log.v(Constants.LOG_TAG, "connect()"); //$NON-NLS-1$
+                this.socket.connect();
+                this.identify(login, pass);
+
+                JSONObject subscribe = new JSONObject();
+                JSONObject data = new JSONObject();
+                try {
+                    subscribe.put("id", "all");
+                    data.put("title", ".*");
+                    data.put("regexp", true);
+                    subscribe.put("data", data);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                this.socket.emit("subscribe", subscribe);
+            }
+        }
+
+        public void disconnect() {
+            this.socket.disconnect();
+        }
+
+        public void close() {
+            this.socket.close();
+        }
+
+        private void identify(String login, String pass) {
+            JSONObject loginObject = new JSONObject();
+            try {
+                loginObject.put("login", login);
+                loginObject.put("pass", pass);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            this.socket.emit("login", loginObject);
+        }
+
+        private void configureSocket(final Socket socket) {
+            socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
+
+                @Override
+                public void call(Object... args) {
+                    Log.v(Constants.LOG_TAG, "Socket IO -> Connect "); //$NON-NLS-1$
+                }
+
+            }).on("all", new Emitter.Listener() {
+
+                @Override
+                public void call(Object... args) {
+                    Log.v(Constants.LOG_TAG, "Socket IO -> Event handle "); //$NON-NLS-1$
+                    JSONObject o = (JSONObject) args[0];
+
+                    Log.v(Constants.LOG_TAG, "JSON envoyé : " + o.toString());
+                    Bundle dataBundle = PluginBundleManager.generateURLBundle(context, o.toString());
+
+                    TaskerPlugin.Event.addPassThroughData(INTENT_REQUEST_REQUERY, dataBundle);
+                    TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
+                    context.sendBroadcast(INTENT_REQUEST_REQUERY);
+                }
+
+            }).on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
+
+                @Override
+                public void call(Object... args) {
+                    Log.v(Constants.LOG_TAG, "Socket IO -> Connect Error "); //$NON-NLS-1$
+                }
+
+            }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+
+                @Override
+                public void call(Object... args) {
+                    Log.v(Constants.LOG_TAG, "Socket IO -> Disconnect "); //$NON-NLS-1$
+                    socket.off();
+                }
+
+            });
+        }
+
+        public boolean resetSocketInfo(String newAddr,String newLogin, String newPass) {
+            // If no login/pass no reset
+            if (newLogin.equals("") && newPass.equals("")) {
+                return false;
+            }
+            if (this.login == null && this.pass == null) {
+                return true;
+            }
+            return !newLogin.equals(this.login) || !newPass.equals(this.pass) || !newAddr.equals(this.host);
+        }
 
     }
 }

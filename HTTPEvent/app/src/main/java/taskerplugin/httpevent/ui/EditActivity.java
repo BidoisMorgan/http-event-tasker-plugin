@@ -3,6 +3,7 @@ package taskerplugin.httpevent.ui;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -20,6 +21,9 @@ public class EditActivity extends AbstractPluginActivity {
     private static int PORT = 8765;
     private EditText editName;
     private EditText editFilters;
+    private EditText editSSAddr;
+    private EditText editSSLogin;
+    private EditText editSSPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,19 +38,33 @@ public class EditActivity extends AbstractPluginActivity {
 
         editName = (EditText) findViewById(R.id.edit_txt_name);
         editFilters = (EditText) findViewById(R.id.edit_txt_filters);
+        editSSAddr = (EditText) findViewById(R.id.edit_txt_address_socket_server);
+        editSSLogin = (EditText) findViewById(R.id.edit_txt_login_socket_server);
+        editSSPass = (EditText) findViewById(R.id.edit_txt_password_socket_server);
 
         if (getIntent().getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB) != null) {
             editName.setText(getIntent().getStringExtra(com.twofortyfouram.locale.Intent.EXTRA_STRING_BLURB));
         }
 
         if (getIntent().getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE) != null) {
-            ArrayList<String> filters = getIntent().getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE).getStringArrayList(PluginBundleManager.BUNDLE_EXTRA_STRINGS_FILTERS);
+            Bundle bundleExtra = getIntent().getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE);
+            ArrayList<String> filters = bundleExtra.getStringArrayList(PluginBundleManager.BUNDLE_EXTRA_STRINGS_FILTERS);
             if (filters != null) {
                 String stringFilters = "";
                 for (String f : filters) {
                     stringFilters += f + "\n";
                 }
                 editFilters.setText(stringFilters);
+            }
+
+            if (bundleExtra.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_ADDR) != null) {
+                editSSAddr.setText(bundleExtra.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_ADDR));
+            }
+            if (bundleExtra.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN) != null) {
+                editSSLogin.setText(bundleExtra.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN));
+            }
+            if (bundleExtra.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_PASS) != null) {
+                editSSPass.setText(bundleExtra.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_PASS));
             }
         }
     }
@@ -66,6 +84,10 @@ public class EditActivity extends AbstractPluginActivity {
             filters = new ArrayList<>(Arrays.asList(editFilters.getText().toString().split("[\\r\\n]+")));
         }
 
+        String ssAddr = editSSAddr.getText().toString();
+        String ssLogin = editSSLogin.getText().toString();
+        String ssPass = editSSPass.getText().toString();
+
         /*
          * This extra is the data to ourselves: either for the Activity or the BroadcastReceiver. Note
          * that anything placed in this Bundle must be available to Locale's class loader. So storing
@@ -74,7 +96,7 @@ public class EditActivity extends AbstractPluginActivity {
          * Android platform objects (A Serializable class private to this plug-in's APK cannot be
          * stored in the Bundle, as Locale's classloader will not recognize it).
          */
-        final Bundle resultBundle = PluginBundleManager.generateBundle(getApplicationContext(), filters);
+        final Bundle resultBundle = PluginBundleManager.generateBundle(getApplicationContext(), filters, ssAddr, ssLogin, ssPass);
         resultIntent.putExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE, resultBundle);
 
         /*

@@ -1,99 +1,188 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/edit_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".EditActivity"
-    android:id="@+id/edit_layout">
+    tools:context=".EditActivity">
 
-    <TextView android:text="@string/lbl_addr" android:layout_width="wrap_content"
+    <TextView
+        android:id="@+id/txt_lbl_addr"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/txt_lbl_addr" />
+        android:text="@string/lbl_addr" />
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/txt_addr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignTop="@+id/txt_lbl_addr"
-        android:layout_toRightOf="@+id/txt_lbl_addr"
+        android:layout_marginLeft="5dp"
         android:layout_toEndOf="@+id/txt_lbl_addr"
-        android:layout_marginLeft="5dp" />
+        android:layout_toRightOf="@+id/txt_lbl_addr" />
 
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/lbl_port"
         android:id="@+id/txt_lbl_port"
-        android:layout_below="@+id/txt_lbl_addr"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/txt_port"
-        android:layout_alignTop="@+id/txt_lbl_port"
-        android:layout_toRightOf="@+id/txt_lbl_port"
-        android:layout_toEndOf="@+id/txt_lbl_port"
-        android:layout_marginLeft="5dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/lbl_name"
-        android:id="@+id/txt_lbl_name"
-        android:layout_below="@+id/txt_lbl_port"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="24dp" />
+        android:layout_below="@+id/txt_lbl_addr"
+        android:text="@string/lbl_port" />
+
+    <TextView
+        android:id="@+id/txt_port"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/txt_lbl_port"
+        android:layout_marginLeft="5dp"
+        android:layout_toEndOf="@+id/txt_lbl_port"
+        android:layout_toRightOf="@+id/txt_lbl_port"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <TextView
+        android:id="@+id/txt_lbl_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/txt_lbl_port"
+        android:layout_marginTop="24dp"
+        android:text="@string/lbl_name" />
 
     <EditText
+        android:id="@+id/edit_txt_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/edit_txt_name"
-        android:inputType="none"
         android:layout_alignTop="@+id/txt_lbl_name"
+        android:layout_toEndOf="@+id/txt_lbl_name"
         android:layout_toRightOf="@+id/txt_lbl_name"
-        android:layout_toEndOf="@+id/txt_lbl_name" />
+        android:inputType="none" />
 
     <TextView
+        android:id="@+id/txt_lbl_filter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/txt_lbl_filter"
-        android:layout_below="@+id/edit_txt_name"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
+        android:layout_below="@+id/edit_txt_name"
         android:layout_marginTop="44dp"
-        android:text="@string/lbl_filter" />
+        android:text="@string/lbl_filter"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
     <EditText
+        android:id="@+id/edit_txt_filters"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="textMultiLine"
-        android:ems="10"
-        android:id="@+id/edit_txt_filters"
-        android:layout_toRightOf="@+id/txt_lbl_filter"
-        android:layout_alignRight="@+id/edit_txt_name"
         android:layout_alignEnd="@+id/edit_txt_name"
-        android:layout_below="@+id/txt_lbl_filter" />
+        android:layout_alignRight="@+id/edit_txt_name"
+        android:layout_below="@+id/txt_lbl_filter"
+        android:layout_toRightOf="@+id/txt_lbl_filter"
+        android:ems="10"
+        android:inputType="textMultiLine" />
 
     <TextView
+        android:id="@+id/txt_lbl_filter_help"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="@string/lbl_filter_help"
-        android:id="@+id/txt_lbl_filter_help"
-        android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_toEndOf="@+id/txt_lbl_filter"
+        android:layout_alignParentRight="true"
         android:layout_alignTop="@+id/txt_lbl_filter"
-        android:layout_toRightOf="@+id/txt_lbl_filter"
         android:layout_marginLeft="5dp"
+        android:layout_toEndOf="@+id/txt_lbl_filter"
+        android:layout_toRightOf="@+id/txt_lbl_filter"
+        android:text="@string/lbl_filter_help"
+        android:textAppearance="?android:attr/textAppearanceSmall"
         android:textStyle="italic" />
+
+    <LinearLayout
+        android:id="@+id/llayout_socket_server"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="false"
+        android:layout_below="@+id/edit_txt_filters"
+        android:layout_marginTop="20dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/llayout_socket_server_address"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="46dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txt_lbl_address_socket_server"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="5dp"
+                android:text="@string/lbl_address_socket_server"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textStyle="italic" />
+
+            <EditText
+                android:id="@+id/edit_txt_address_socket_server"
+                android:text="@string/lbl_address_socket_server_default_value"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_alignTop="@+id/txt_t_lbl_name"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llayout_socket_server_login"
+            android:layout_marginTop="20dp"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/txt_lbl_login_socket_server"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="5dp"
+                android:text="@string/lbl_login_socket_server"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textStyle="italic" />
+
+            <EditText
+                android:id="@+id/edit_txt_login_socket_server"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_alignTop="@+id/txt_t_lbl_name"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llayout_socket_server_password"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/txt_lbl_password_socket_server"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="5dp"
+                android:text="@string/lbl_password_socket_server"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textStyle="italic" />
+
+            <EditText
+                android:id="@+id/edit_txt_password_socket_server"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_alignTop="@+id/txt_t_lbl_name"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </RelativeLayout>

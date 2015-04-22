@@ -11,4 +11,8 @@
     <string name="btn_lbl_new_filter">Ajouter filtre</string>
     <string name="btn_lbl_delete_filter">Supprimer</string>
     <string name="lbl_filter_help">(Un filtre par ligne)</string>
+    <string name="lbl_address_socket_server">Adresse serveur socket</string>
+    <string name="lbl_address_socket_server_default_value">http://thacthab.herokuapp.com/</string>
+    <string name="lbl_login_socket_server">Login :</string>
+    <string name="lbl_password_socket_server">Password :</string>
 </resources>
