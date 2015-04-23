@@ -88,7 +88,9 @@ public final class BackgroundService extends Service {
 
             final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                     (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-            mHTTPDHandler = new HTTPHandler(formatedIpAddress, getApplication());
+
+
+            mHTTPDHandler = new HTTPHandler(getApplication());
 //            mHTTPD.start();
         } catch (IOException e) {
             e.printStackTrace();
@@ -116,6 +118,9 @@ public final class BackgroundService extends Service {
             String ssLogin = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN);
             String ssPass = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_PASS);
 
+            String httpAddr = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR);
+            String httpPort = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_HTTP_SERV_PORT);
+
             boolean resetSocketInfo = mSocketHandler.resetSocketInfo(ssAddr, ssLogin, ssPass);
 
             /*
@@ -128,12 +133,9 @@ public final class BackgroundService extends Service {
             if (!mIsOnStartCommandCalled) {
 //                TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
 //                sendBroadcast(INTENT_REQUEST_REQUERY);
-                try {
-                    mHTTPDHandler.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+                mHTTPDHandler.setInformation(httpAddr, httpPort);
+                mHTTPDHandler.initializeHTTPServer();
+                mHTTPDHandler.start();
 
                 Log.v(Constants.LOG_TAG, String.format("FISRT socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
                 mSocketHandler.setServer(ssAddr);

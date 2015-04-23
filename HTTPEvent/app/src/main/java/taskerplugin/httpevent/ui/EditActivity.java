@@ -3,7 +3,6 @@ package taskerplugin.httpevent.ui;
 import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -19,22 +18,26 @@ import taskerplugin.httpevent.bundle.PluginBundleManager;
 public class EditActivity extends AbstractPluginActivity {
 
     private static int PORT = 8765;
+
     private EditText editName;
     private EditText editFilters;
     private EditText editSSAddr;
     private EditText editSSLogin;
     private EditText editSSPass;
 
+    private TextView txtHTTPAddr;
+    private TextView txtHTTPPort;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_activity);
 
-        TextView txtAddr = (TextView) findViewById(R.id.txt_addr);
-        txtAddr.setText(getFormatedAddress());
+        txtHTTPAddr = (TextView) findViewById(R.id.txt_addr);
+        txtHTTPAddr.setText(getFormatedAddress());
 
-        TextView txtPort = (TextView) findViewById(R.id.txt_port);
-        txtPort.setText(Integer.toString(PORT));
+        txtHTTPPort = (TextView) findViewById(R.id.txt_port);
+        txtHTTPPort.setText(Integer.toString(PORT));
 
         editName = (EditText) findViewById(R.id.edit_txt_name);
         editFilters = (EditText) findViewById(R.id.edit_txt_filters);
@@ -84,9 +87,14 @@ public class EditActivity extends AbstractPluginActivity {
             filters = new ArrayList<>(Arrays.asList(editFilters.getText().toString().split("[\\r\\n]+")));
         }
 
+        /** Socket Information **/
         String ssAddr = editSSAddr.getText().toString();
         String ssLogin = editSSLogin.getText().toString();
         String ssPass = editSSPass.getText().toString();
+
+        /** HTTP Information **/
+        String httpAddr = txtHTTPAddr.getText().toString();
+        String httpPort = txtHTTPPort.getText().toString();
 
         /*
          * This extra is the data to ourselves: either for the Activity or the BroadcastReceiver. Note
@@ -96,7 +104,7 @@ public class EditActivity extends AbstractPluginActivity {
          * Android platform objects (A Serializable class private to this plug-in's APK cannot be
          * stored in the Bundle, as Locale's classloader will not recognize it).
          */
-        final Bundle resultBundle = PluginBundleManager.generateBundle(getApplicationContext(), filters, ssAddr, ssLogin, ssPass);
+        final Bundle resultBundle = PluginBundleManager.generateBundle(getApplicationContext(), filters, ssAddr, ssLogin, ssPass, httpAddr, httpPort);
         resultIntent.putExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE, resultBundle);
 
         /*

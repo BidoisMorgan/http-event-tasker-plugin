@@ -32,6 +32,9 @@ public final class SocketIOHandler {
     private String login;
     private String pass;
 
+    private String httpAddr;
+    private String httpPort;
+
     public SocketIOHandler(String host, Context ctxt) {
         try {
             this.context = ctxt;
@@ -84,6 +87,11 @@ public final class SocketIOHandler {
                     e.printStackTrace();
                 }
             } */
+    }
+
+    public void addHTTPInfo(String addr, String port) {
+        this.httpAddr = addr;
+        this.httpPort = port;
     }
 
     public void connect(String login, String pass) {
@@ -143,6 +151,15 @@ public final class SocketIOHandler {
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Event handle "); //$NON-NLS-1$
                 JSONObject o = (JSONObject) args[0];
+
+                // Adding HTTP Info
+                try {
+                    o.put("httpAddr", httpAddr);
+                    o.put("httpPort", httpPort);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
 
                 Log.v(Constants.LOG_TAG, "JSON envoyé : " + o.toString());
                 Bundle dataBundle = PluginBundleManager.generateURLBundle(context, o.toString());

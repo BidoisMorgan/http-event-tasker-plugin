@@ -40,15 +40,7 @@ public final class PluginBundleManager {
      * easier. For example, suppose a bug is found in how some version of the plug-in stored its Bundle. By
      * having the version, the plug-in can better detect when such bugs occur.
      */
-    public static final String BUNDLE_EXTRA_INT_VERSION_CODE =
-            BASE_EXTRA_BUNDLE + "INT_VERSION_CODE"; //$NON-NLS-1$
-
-    /**
-     * Type: {@code int}.
-     * <p/>
-     * Int representing PORT
-     */
-    public static final String BUNDLE_EXTRA_INT_PORT = BASE_EXTRA_BUNDLE + "INT_PORT"; //$NON-NLS-1$
+    public static final String BUNDLE_EXTRA_INT_VERSION_CODE = BASE_EXTRA_BUNDLE + "INT_VERSION_CODE"; //$NON-NLS-1$
 
     public static final String BUNDLE_EXTRA_STRINGS_FILTERS = BASE_EXTRA_BUNDLE + "STRINGS_FILTERS"; //$NON-NLS-1$
 
@@ -57,6 +49,9 @@ public final class PluginBundleManager {
     public static final String BUNDLE_EXTRA_STRING_SOC_SERV_ADDR = BASE_EXTRA_BUNDLE + "STRING_SOC_SERV_ADDR";
     public static final String BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN = BASE_EXTRA_BUNDLE + "STRING_SOC_SERV_LOGIN";
     public static final String BUNDLE_EXTRA_STRING_SOC_SERV_PASS = BASE_EXTRA_BUNDLE + "STRING_SOC_SERV_PASS";
+
+    public static final String BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR = BASE_EXTRA_BUNDLE + "STRING_HTTP_SERV_ADDR";
+    public static final String BUNDLE_EXTRA_STRING_HTTP_SERV_PORT = BASE_EXTRA_BUNDLE + "STRING_HTTP_SERV_PORT";
 
     /**
      * Method to verify the content of the bundle are correct.
@@ -95,13 +90,20 @@ public final class PluginBundleManager {
             }
             return false;
         }
+        if (!bundle.containsKey(BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR) || !bundle.containsKey(BUNDLE_EXTRA_STRING_HTTP_SERV_PORT)) {
+            if (Constants.IS_LOGGABLE) {
+                Log.e(Constants.LOG_TAG,
+                        String.format("bundle must contain extra %s, %s", BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR, BUNDLE_EXTRA_STRING_HTTP_SERV_PORT)); //$NON-NLS-1$
+            }
+            return false;
+        }
 
         /*
          * Make sure the correct number of extras exist. Run this test after checking for specific Bundle
          * extras above so that the error message is more useful. (E.g. the caller will see what extras are
          * missing, rather than just a message that there is the wrong number).
          */
-        if (5 != bundle.keySet().size()) {
+        if (7 != bundle.keySet().size()) {
             if (Constants.IS_LOGGABLE) {
                 Log.e(Constants.LOG_TAG,
                         String.format("bundle must contain 5 keys, but currently contains %d keys: %s", bundle.keySet().size(), bundle.keySet())); //$NON-NLS-1$
@@ -125,30 +127,19 @@ public final class PluginBundleManager {
     }
 
     /**
-     * @param context  Application context.
-     * @param paramInt
-     * @return A plug-in bundle.
-     */
-    public static Bundle generateBundle(final Context context, final int paramInt) {
-        final Bundle result = new Bundle();
-        result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
-        result.putInt(BUNDLE_EXTRA_INT_PORT, paramInt);
-
-        return result;
-    }
-
-    /**
-     * @param context  Application context.
+     * @param context Application context.
      * @param filters
      * @return A plug-in bundle.
      */
-    public static Bundle generateBundle(final Context context, final ArrayList<String> filters, String ssAddr, String ssLogin, String ssPass) {
+    public static Bundle generateBundle(final Context context, final ArrayList<String> filters, String ssAddr, String ssLogin, String ssPass, String httpAddr, String httpPort) {
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putStringArrayList(BUNDLE_EXTRA_STRINGS_FILTERS, filters);
         result.putString(BUNDLE_EXTRA_STRING_SOC_SERV_ADDR, ssAddr);
         result.putString(BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN, ssLogin);
         result.putString(BUNDLE_EXTRA_STRING_SOC_SERV_PASS, ssPass);
+        result.putString(BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR, httpAddr);
+        result.putString(BUNDLE_EXTRA_STRING_HTTP_SERV_PORT, httpPort);
 
         return result;
     }
@@ -157,14 +148,6 @@ public final class PluginBundleManager {
         final Bundle result = new Bundle();
         result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
         result.putString(BUNDLE_EXTRA_STRING_URL, url);
-
-        return result;
-    }
-
-    public static Bundle generateURLBundle(final Context context, final JSONObject json) {
-        final Bundle result = new Bundle();
-        result.putInt(BUNDLE_EXTRA_INT_VERSION_CODE, Constants.getVersionCode(context));
-        result.putString(BUNDLE_EXTRA_STRING_URL, json.toString());
 
         return result;
     }
