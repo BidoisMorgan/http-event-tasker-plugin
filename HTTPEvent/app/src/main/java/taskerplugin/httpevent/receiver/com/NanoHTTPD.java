@@ -1,4 +1,4 @@
-package taskerplugin.httpevent.receiver;
+package taskerplugin.httpevent.receiver.com;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
