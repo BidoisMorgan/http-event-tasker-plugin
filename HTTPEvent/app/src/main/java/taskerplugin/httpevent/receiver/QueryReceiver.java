@@ -134,7 +134,7 @@ public final class QueryReceiver extends BroadcastReceiver {
                 }
 
                 if (Constants.IS_LOGGABLE) {
-                    Log.v(Constants.LOG_TAG, "Condition satsified ? -> " + areFiltersOK); //$NON-NLS-1$
+                    Log.v(Constants.LOG_TAG, "Condition satsified ? -> " + String.valueOf(areFiltersOK).toUpperCase()); //$NON-NLS-1$
                 }
 
                 if (areFiltersOK) {

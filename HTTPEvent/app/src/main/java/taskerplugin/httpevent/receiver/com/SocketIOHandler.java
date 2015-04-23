@@ -11,10 +11,7 @@ import com.github.nkzawa.socketio.client.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
 
 import taskerplugin.httpevent.Constants;
 import taskerplugin.httpevent.TaskerPlugin;
@@ -26,7 +23,7 @@ import taskerplugin.httpevent.receiver.BackgroundService;
  */
 public final class SocketIOHandler {
 
-    private com.github.nkzawa.socketio.client.Socket socket;
+    private Socket socket;
     private Context context;
     private String host;
     private String login;
@@ -34,6 +31,10 @@ public final class SocketIOHandler {
 
     private String httpAddr;
     private String httpPort;
+
+    private final JSONObject socketStateCreation = new JSONObject();
+    private final JSONObject socketStateConnection = new JSONObject();
+    private final JSONObject socketStateDisconnection = new JSONObject();
 
     public SocketIOHandler(String host, Context ctxt) {
         try {
@@ -50,9 +51,21 @@ public final class SocketIOHandler {
 
     public SocketIOHandler(Context ctxt) {
         this.context = ctxt;
-        // Initialize socket with the host
+        this.createSockeStateMsg();
         Log.v(Constants.LOG_TAG, "Constructeur socket handler"); //$NON-NLS-1$
-//            this.configureSocket(socket);
+    }
+
+    private final void createSockeStateMsg(){
+        try {
+            socketStateCreation.put("creation", true);
+            socketStateCreation.put("socketstate", "creation");
+            socketStateConnection.put("connection", true);
+            socketStateConnection.put("socketstate", "connection");
+            socketStateDisconnection.put("disconnection", true);
+            socketStateDisconnection.put("socketstate", "disconnection");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setServer(String host) {
@@ -117,6 +130,19 @@ public final class SocketIOHandler {
         }
     }
 
+    /**
+     * TODO A mettre dans interface
+     * @param msg
+     */
+    private void sendMsgToTasker(String msg) {
+        Log.v(Constants.LOG_TAG, "JSON envoyé : " + msg);
+        Bundle dataBundle = PluginBundleManager.generateURLBundle(context, msg);
+
+        TaskerPlugin.Event.addPassThroughData(BackgroundService.INTENT_REQUEST_REQUERY, dataBundle);
+        TaskerPlugin.Event.addPassThroughMessageID(BackgroundService.INTENT_REQUEST_REQUERY);
+        context.sendBroadcast(BackgroundService.INTENT_REQUEST_REQUERY);
+    }
+
     public void disconnect() {
         this.socket.disconnect();
     }
@@ -143,6 +169,8 @@ public final class SocketIOHandler {
             @Override
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Connect "); //$NON-NLS-1$
+                // Connection Socket message
+                sendMsgToTasker(socketStateConnection.toString());
             }
 
         }).on("all", new Emitter.Listener() {
@@ -160,13 +188,14 @@ public final class SocketIOHandler {
                     e.printStackTrace();
                 }
 
+                sendMsgToTasker(o.toString());
 
-                Log.v(Constants.LOG_TAG, "JSON envoyé : " + o.toString());
-                Bundle dataBundle = PluginBundleManager.generateURLBundle(context, o.toString());
-
-                TaskerPlugin.Event.addPassThroughData(BackgroundService.INTENT_REQUEST_REQUERY, dataBundle);
-                TaskerPlugin.Event.addPassThroughMessageID(BackgroundService.INTENT_REQUEST_REQUERY);
-                context.sendBroadcast(BackgroundService.INTENT_REQUEST_REQUERY);
+//                Log.v(Constants.LOG_TAG, "JSON envoyé : " + o.toString());
+//                Bundle dataBundle = PluginBundleManager.generateURLBundle(context, o.toString());
+//
+//                TaskerPlugin.Event.addPassThroughData(BackgroundService.INTENT_REQUEST_REQUERY, dataBundle);
+//                TaskerPlugin.Event.addPassThroughMessageID(BackgroundService.INTENT_REQUEST_REQUERY);
+//                context.sendBroadcast(BackgroundService.INTENT_REQUEST_REQUERY);
             }
 
         }).on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
@@ -181,10 +210,15 @@ public final class SocketIOHandler {
             @Override
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Disconnect "); //$NON-NLS-1$
+                // Disconnection Socket message
+                sendMsgToTasker(socketStateDisconnection.toString());
                 socket.off();
             }
 
         });
+
+        // Creation Socket message
+        sendMsgToTasker(socketStateCreation.toString());
     }
 
     public boolean resetSocketInfo(String newAddr,String newLogin, String newPass) {

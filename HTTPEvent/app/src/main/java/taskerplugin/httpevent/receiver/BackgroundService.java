@@ -139,9 +139,11 @@ public final class BackgroundService extends Service {
 
                 Log.v(Constants.LOG_TAG, String.format("FISRT socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
                 mSocketHandler.setServer(ssAddr);
+                mSocketHandler.addHTTPInfo(httpAddr, httpPort);
                 mSocketHandler.connect(ssLogin, ssPass);
             } else if (resetSocketInfo) {
                 Log.v(Constants.LOG_TAG, String.format("RESET socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
+                mSocketHandler.addHTTPInfo(httpAddr, httpPort);
                 mSocketHandler.setServer(ssAddr);
                 mSocketHandler.connect(ssLogin, ssPass);
             }
