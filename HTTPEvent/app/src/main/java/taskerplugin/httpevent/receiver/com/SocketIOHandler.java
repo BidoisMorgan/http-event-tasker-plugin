@@ -55,7 +55,7 @@ public final class SocketIOHandler {
         Log.v(Constants.LOG_TAG, "Constructeur socket handler"); //$NON-NLS-1$
     }
 
-    private final void createSockeStateMsg(){
+    private final void createSockeStateMsg() {
         try {
             socketStateCreation.put("creation", true);
             socketStateCreation.put("socketstate", "creation");
@@ -69,10 +69,12 @@ public final class SocketIOHandler {
     }
 
     public void setServer(String host) {
+        IO.Options opts = new IO.Options();
+        opts.reconnection = true;
         if (this.host == null) {
             this.host = host;
             try {
-                this.socket = IO.socket(this.host);
+                this.socket = IO.socket(this.host, opts);
                 this.configureSocket(socket);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
@@ -82,7 +84,7 @@ public final class SocketIOHandler {
                 this.socket.disconnect();
             }
             try {
-                this.socket = IO.socket(this.host);
+                this.socket = IO.socket(this.host, opts);
                 this.configureSocket(socket);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
@@ -102,6 +104,10 @@ public final class SocketIOHandler {
             } */
     }
 
+    public void resetServer() {
+        this.setServer(this.host);
+    }
+
     public void addHTTPInfo(String addr, String port) {
         this.httpAddr = addr;
         this.httpPort = port;
@@ -114,28 +120,36 @@ public final class SocketIOHandler {
         if (!this.socket.connected()) {
             Log.v(Constants.LOG_TAG, "connect()"); //$NON-NLS-1$
             this.socket.connect();
-            this.identify(login, pass);
-
-            JSONObject subscribe = new JSONObject();
-            JSONObject data = new JSONObject();
-            try {
-                subscribe.put("id", "all");
-                data.put("title", ".*");
-                data.put("regexp", true);
-                subscribe.put("data", data);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            this.socket.emit("subscribe", subscribe);
         }
+    }
+
+    public void identifyAndSubscribe() {
+        this.identify(login, pass);
+
+        JSONObject subscribe = new JSONObject();
+        JSONObject data = new JSONObject();
+        try {
+            subscribe.put("id", "all");
+            data.put("title", ".*");
+            data.put("regexp", true);
+            subscribe.put("data", data);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        this.socket.emit("subscribe", subscribe);
+    }
+
+    public void connect() {
+        this.connect(this.login, this.pass);
     }
 
     /**
      * TODO A mettre dans interface
+     *
      * @param msg
      */
     private void sendMsgToTasker(String msg) {
-        Log.v(Constants.LOG_TAG, "JSON envoyé : " + msg);
+//        Log.v(Constants.LOG_TAG, "JSON envoyé : " + msg);
         Bundle dataBundle = PluginBundleManager.generateURLBundle(context, msg);
 
         TaskerPlugin.Event.addPassThroughData(BackgroundService.INTENT_REQUEST_REQUERY, dataBundle);
@@ -151,6 +165,10 @@ public final class SocketIOHandler {
         this.socket.close();
     }
 
+    public boolean isConnected() {
+        return this.socket.connected();
+    }
+
     private void identify(String login, String pass) {
         JSONObject loginObject = new JSONObject();
         try {
@@ -164,11 +182,13 @@ public final class SocketIOHandler {
     }
 
     private void configureSocket(final Socket socket) {
+        socket.off();
         socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 
             @Override
             public void call(Object... args) {
-                Log.v(Constants.LOG_TAG, "Socket IO -> Connect "); //$NON-NLS-1$
+                Log.v(Constants.LOG_TAG, "Socket IO " + socket.id() + " -> Connect "); //$NON-NLS-1$
+                identifyAndSubscribe();
                 // Connection Socket message
                 sendMsgToTasker(socketStateConnection.toString());
             }
@@ -188,6 +208,7 @@ public final class SocketIOHandler {
                     e.printStackTrace();
                 }
 
+                Log.v(Constants.LOG_TAG, "JSON reçu transféré to tasker : " + o.toString());
                 sendMsgToTasker(o.toString());
 
 //                Log.v(Constants.LOG_TAG, "JSON envoyé : " + o.toString());
@@ -211,17 +232,31 @@ public final class SocketIOHandler {
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Disconnect "); //$NON-NLS-1$
                 // Disconnection Socket message
+                Log.v(Constants.LOG_TAG, "JSON disconnection socket : " + socketStateDisconnection.toString());
                 sendMsgToTasker(socketStateDisconnection.toString());
-                socket.off();
+//                socket.off();
+            }
+
+        }).on(Socket.EVENT_RECONNECT, new Emitter.Listener() {
+
+            @Override
+            public void call(Object... args) {
+                Log.v(Constants.LOG_TAG, "Socket IO -> Reconnection "); //$NON-NLS-1$
+                identifyAndSubscribe();
             }
 
         });
 
         // Creation Socket message
+        Log.v(Constants.LOG_TAG, "JSON creation socket : " + socketStateCreation.toString());
         sendMsgToTasker(socketStateCreation.toString());
     }
 
-    public boolean resetSocketInfo(String newAddr,String newLogin, String newPass) {
+    public void socketOff(){
+        this.socket.off();
+    }
+
+    public boolean resetSocketInfo(String newAddr, String newLogin, String newPass) {
         // If no login/pass no reset
         if (newLogin.equals("") && newPass.equals("")) {
             return false;

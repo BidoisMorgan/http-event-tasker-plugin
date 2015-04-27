@@ -14,6 +14,7 @@ package taskerplugin.httpevent.receiver;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -33,6 +34,7 @@ import java.util.Iterator;
 import taskerplugin.httpevent.Constants;
 import taskerplugin.httpevent.bundle.PluginBundleManager;
 import taskerplugin.httpevent.receiver.com.HTTPHandler;
+import taskerplugin.httpevent.receiver.com.NetworkStateReceiver;
 import taskerplugin.httpevent.receiver.com.SocketIOHandler;
 import taskerplugin.httpevent.ui.EditActivity;
 
@@ -40,7 +42,7 @@ import taskerplugin.httpevent.ui.EditActivity;
  * {@code Service} for monitoring the {@code REGISTERED_RECEIVER_ONLY} {@code Intent}s
  * {@link android.content.Intent#ACTION_SCREEN_ON} and {@link android.content.Intent#ACTION_SCREEN_OFF}.
  */
-public final class BackgroundService extends Service {
+public final class BackgroundService extends Service implements NetworkStateReceiver.NetworkStateReceiverListener {
     //@formatter:off
     /*
      * REPRESENTATION INVARIANTS:
@@ -68,6 +70,8 @@ public final class BackgroundService extends Service {
 
     private SocketIOHandler mSocketHandler;
 
+    private NetworkStateReceiver networkStateReceiver;
+
 
     /**
      * Flag to note when {@link #onStartCommand(android.content.Intent, int, int)} has been called.
@@ -78,6 +82,10 @@ public final class BackgroundService extends Service {
     public void onCreate() {
         super.onCreate();
         Log.v(Constants.LOG_TAG, "CREATE SERVICE"); //$NON-NLS-1$
+
+        networkStateReceiver = new NetworkStateReceiver();
+        networkStateReceiver.addListener(this);
+        this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
 
         /*
          * Listen continuously for screen Intents
@@ -171,9 +179,13 @@ public final class BackgroundService extends Service {
         mHTTPDHandler.stop();
         mHTTPDHandler = null;
 
+        mSocketHandler.socketOff();
         mSocketHandler.disconnect();
         mSocketHandler.close();
         mSocketHandler = null;
+
+        networkStateReceiver.removeListener(this);
+        this.unregisterReceiver(networkStateReceiver);
     }
 
     public String getLocalIpAddress() {
@@ -228,4 +240,19 @@ public final class BackgroundService extends Service {
     }
 
 
+    @Override
+    public void networkAvailable() {
+//        if (!mSocketHandler.isConnected()) {
+//            mSocketHandler.resetServer();
+//            mSocketHandler.connect();
+//        }
+        Log.v(Constants.LOG_TAG, "******Network available******"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void networkUnavailable() {
+//        mHTTPDHandler.stop();
+//        mSocketHandler.disconnect();
+        Log.v(Constants.LOG_TAG, "******Network unAvailable******"); //$NON-NLS-1$
+    }
 }

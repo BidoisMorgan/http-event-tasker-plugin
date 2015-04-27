@@ -37,7 +37,8 @@ public class HTTPHandler {
     }
 
     public void initializeHTTPServer() {
-        this.HTTPDServer = new MyHTTPD(this.addr, this.port);
+//        this.HTTPDServer = new MyHTTPD(this.addr, this.port);
+        this.HTTPDServer = new MyHTTPD(null, this.port);
     }
 
     public void start() {
@@ -49,6 +50,7 @@ public class HTTPHandler {
     }
 
     public void stop() {
+        this.HTTPDServer.closeAllConnections();
         this.HTTPDServer.stop();
     }
 
