@@ -226,13 +226,13 @@ public final class QueryReceiver extends BroadcastReceiver {
             String key = keys.next();
 
             // Tasker variables format
-            String newVar = PREFIX_TASKER_VAR_TPE + key.toLowerCase();
+            String newVar = PREFIX_TASKER_VAR_TPE + key.trim().toLowerCase();
 
             // Check if correct tasker var
             if (TaskerPlugin.variableNameValid(newVar)) {
-                if (Constants.IS_LOGGABLE) {
+//                if (Constants.IS_LOGGABLE) {
 //                    Log.v(Constants.LOG_TAG, "Variable -> " + newVar); //$NON-NLS-1$
-                }
+//                }
 
 
                 if (key.equals("message")) {
@@ -331,7 +331,7 @@ public final class QueryReceiver extends BroadcastReceiver {
         // Test if the filter is just about presence of parameter or on value
         if (filterOp.isPresenceFilter()) {
             // Just presence -> test key and parameter of the opertion
-            if (paramKey.equals(filterOp.getParameter())) {
+            if (paramKey.trim().equals(filterOp.getParameter().trim())) {
                 return true;
             }
         } else {
@@ -421,15 +421,15 @@ public final class QueryReceiver extends BroadcastReceiver {
          */
         public boolean makeOperation(String parameterKey, String parameterValue) throws Exception {
 //            if (Constants.IS_LOGGABLE) {
-//                Log.v(Constants.LOG_TAG, String.format("op key : %s op : %s op value : %s -- To test key : %s value : %s", parameter, operator, value, parameterKey, parameterValue)); //$NON-NLS-1$
+//                Log.v(Constants.LOG_TAG, String.format("op key : %s op : %s op value : %s -- To test key : %s value : %s", parameter.trim(), operator.trim(), value.trim(), parameterKey.trim(), parameterValue.trim())); //$NON-NLS-1$
 //            }
             // Test key
-            if (this.parameter.equals(parameterKey)) {
+            if (this.parameter.trim().equals(parameterKey.trim())) {
                 // Test value
                 if (this.operator.equals("==")) {
-                    return this.value.equals(parameterValue);
+                    return this.value.trim().equals(parameterValue.trim());
                 } else if (this.operator.equals("!=")) {
-                    return !this.value.equals(parameterValue);
+                    return !this.value.trim().equals(parameterValue.trim());
                 } else {
                     throw new Exception("Operator doesn't supported");
                 }
