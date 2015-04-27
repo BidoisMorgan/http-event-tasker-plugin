@@ -122,7 +122,7 @@ public final class QueryReceiver extends BroadcastReceiver {
                             JSONObject paramJSON = new JSONObject(URLParams);
 
                             if (!filters.isEmpty()) {
-                                areFiltersOK = checkFilters(paramJSON, filters);
+                                areFiltersOK = checkFilters(paramJSON, buildOperationFilters(filters));
                             }
 
                             // Transform the param into taskers varibales
@@ -242,7 +242,7 @@ public final class QueryReceiver extends BroadcastReceiver {
                         innerObject = new JSONObject((String) paramsJSON.get(key));
                         getBundleVariables(innerObject, varsBundle);
                     } catch (JSONException e) {
-                        e.printStackTrace();
+                        // Don't print it because it is not important and can appears a lot
                     }
                 }
 
@@ -258,12 +258,60 @@ public final class QueryReceiver extends BroadcastReceiver {
     }
 
     /**
-     * Check if all the filters are present in params KEYS
-     * For the moment just look the presence in the keys, next add values @TODO
+     * Function to test if all filter are satisfied
+     * @param paramsJSON JSONObject of request's parameters
+     * @param filtersOperation ArrayList of Operation for the filters
+     * @return true if all filter are satisfied
      */
-    private boolean checkFilters(HashMap<String, String> mapParams, ArrayList<String> filters) {
-        for (String filter : filters) {
-            if (!mapParams.containsKey(filter)) {
+    private boolean checkFilters(JSONObject paramsJSON, ArrayList<Operation> filtersOperation) {
+        for (int i = 0; i < filtersOperation.size(); i++) {
+
+            Iterator<String> keysParams = paramsJSON.keys();
+            boolean isFilterOK = false;
+
+            while (keysParams.hasNext()) {
+                String keyParam = keysParams.next();
+
+                // If key message, test if there its json object in it
+                if (keyParam.equals("message")) {
+                    JSONObject innerObject = new JSONObject();
+                    try {
+                        // If key message is JSON check on its own keys/value
+                        innerObject = new JSONObject((String) paramsJSON.get(keyParam));
+
+                        Iterator<String> keysMsg = innerObject.keys();
+                        while (keysMsg.hasNext()) {
+                            String keyMsg = keysMsg.next();
+                            // ATTENTION bug possible try catch trop large ici???
+                            if (testParameter(keyMsg, innerObject.getString(keyMsg), filtersOperation.get(i))) {
+                                isFilterOK = true;
+                            }
+                        }
+                    } catch (JSONException e) {
+                        // The message do not have a JSON Object so consider it like ohters
+                        try {
+                            if (testParameter(keyParam, paramsJSON.getString(keyParam), filtersOperation.get(i))) {
+                                isFilterOK = true;
+                            }
+                        } catch (JSONException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+
+                } else {
+                    try {
+                        if (testParameter(keyParam, paramsJSON.getString(keyParam), filtersOperation.get(i))) {
+                            isFilterOK = true;
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+            }
+            // If the current filter checked was not found, return false
+            if (!isFilterOK) {
                 return false;
             }
         }
@@ -271,41 +319,125 @@ public final class QueryReceiver extends BroadcastReceiver {
     }
 
     /**
-     * Check if all the filters are present in params KEYS
-     * For the moment just look the presence in the keys, next add values @TODO
+     * Function to test if a parameter satisfy one operation
+     *
+     * @param paramKey   parameter key String
+     * @param paramValue parameter value String
+     * @param filterOp   operation filter to test
+     * @return true if the parameter satisfy operation filter
      */
-    private boolean checkFilters(JSONObject paramsJSON, ArrayList<String> filters) {
-        for (int i = 0; i < filters.size(); i++) {
-            Iterator<String> keys = paramsJSON.keys();
-            boolean isFilterInParam = false;
-            while (keys.hasNext()) {
-                String key = keys.next();
 
-                if (key.equals(filters.get(i))) {
-                    isFilterInParam = true;
-                } else if (key.equals("message")) {
-                    JSONObject innerObject = new JSONObject();
-                    try {
-                        // If key message is JSON check on its own keys/value
-                        innerObject = new JSONObject((String) paramsJSON.get(key));
-                        Iterator<String> keysMsg = innerObject.keys();
-                        while (keysMsg.hasNext()) {
-                            String keyMsg = keysMsg.next();
-                            if (keyMsg.equals(filters.get(i))) {
-                                isFilterInParam = true;
-                            }
-                        }
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
+    private boolean testParameter(String paramKey, String paramValue, Operation filterOp) {
+        // Test if the filter is just about presence of parameter or on value
+        if (filterOp.isPresenceFilter()) {
+            // Just presence -> test key and parameter of the opertion
+            if (paramKey.equals(filterOp.getParameter())) {
+                return true;
             }
-            // If the current filter checked was not found, return false
-            if (!isFilterInParam) {
+        } else {
+            try {
+                // If the value of the parameter satisfy operation, filter Ok
+                if (filterOp.makeOperation(paramKey, paramValue)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Method to transform the list of filters into Operation object
+     *
+     * @param filters
+     * @return
+     */
+    private ArrayList<Operation> buildOperationFilters(ArrayList<String> filters) {
+        ArrayList<Operation> alOperations = new ArrayList<>();
+        for (String filterString : filters) {
+            Operation newOp;
+
+            if (Constants.IS_LOGGABLE) {
+                Log.v(Constants.LOG_TAG, "String to transform ? -> " + filterString); //$NON-NLS-1$
+            }
+
+            String[] elementsFilters = filterString.split("(?<===)|(?===)|(?=\\!=)|(?<=\\!=)");
+            if (elementsFilters.length == 1) {
+                newOp = new Operation(elementsFilters[0]);
+            } else if (elementsFilters.length == 3) {
+                newOp = new Operation(elementsFilters[0], elementsFilters[1], elementsFilters[2]);
+            } else {
+                // @todo à vérifier quoi faire ici..
+                newOp = new Operation("");
+            }
+            alOperations.add(newOp);
+        }
+        return alOperations;
+    }
+
+    /**
+     * Class representing an operation with a parameter, an operator and a value. Used to represent the filter operation
+     * Operation -> parameter operator value -> param==value
+     */
+    private class Operation {
+
+        private String parameter;
+        private String value;
+        private String operator;
+
+        /**
+         * It is possible to have filter without test on value. For this filter, the only test will be on the presence or not in the parameters.
+         * This boolean is set to true for these particular filters
+         */
+        private boolean presenceFilter;
+
+        public Operation(String param, String op, String value) {
+            this.parameter = param;
+            this.operator = op;
+            this.value = value;
+            this.presenceFilter = false;
+        }
+
+        public Operation(String param) {
+            this.parameter = param;
+            this.presenceFilter = true;
+        }
+
+        public String getParameter() {
+            return this.parameter;
+        }
+
+        public boolean isPresenceFilter() {
+            return this.presenceFilter;
+        }
+
+        /**
+         * Function to make the test of the filter condition
+         *
+         * @param parameterValue Value of the parameter to test
+         * @return true if the parameterValue have the same value or not, depending the operator
+         * @throws Exception
+         */
+        public boolean makeOperation(String parameterKey, String parameterValue) throws Exception {
+//            if (Constants.IS_LOGGABLE) {
+//                Log.v(Constants.LOG_TAG, String.format("op key : %s op : %s op value : %s -- To test key : %s value : %s", parameter, operator, value, parameterKey, parameterValue)); //$NON-NLS-1$
+//            }
+            // Test key
+            if (this.parameter.equals(parameterKey)) {
+                // Test value
+                if (this.operator.equals("==")) {
+                    return this.value.equals(parameterValue);
+                } else if (this.operator.equals("!=")) {
+                    return !this.value.equals(parameterValue);
+                } else {
+                    throw new Exception("Operator doesn't supported");
+                }
+            } else {
                 return false;
             }
         }
-        return true;
+
     }
 
 
