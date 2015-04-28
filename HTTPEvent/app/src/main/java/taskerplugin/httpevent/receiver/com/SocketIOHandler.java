@@ -12,8 +12,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.net.ssl.SSLContext;
 
 import taskerplugin.httpevent.Constants;
 import taskerplugin.httpevent.TaskerPlugin;
@@ -75,6 +78,12 @@ public final class SocketIOHandler {
 
     public void setServer(String host) {
         IO.Options opts = new IO.Options();
+        try {
+            IO.setDefaultSSLContext(SSLContext.getDefault());
+            opts.sslContext = SSLContext.getDefault();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
         opts.reconnection = true;
         if (this.host == null) {
             this.host = host;
