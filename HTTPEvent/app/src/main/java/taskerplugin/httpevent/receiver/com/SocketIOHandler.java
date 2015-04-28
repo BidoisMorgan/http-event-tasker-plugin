@@ -12,6 +12,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import taskerplugin.httpevent.Constants;
 import taskerplugin.httpevent.TaskerPlugin;
@@ -35,6 +37,9 @@ public final class SocketIOHandler {
     private final JSONObject socketStateCreation = new JSONObject();
     private final JSONObject socketStateConnection = new JSONObject();
     private final JSONObject socketStateDisconnection = new JSONObject();
+
+    private Timer timer;
+    private PingSocketTask pingSocTask;
 
     public SocketIOHandler(String host, Context ctxt) {
         try {
@@ -191,6 +196,12 @@ public final class SocketIOHandler {
                 identifyAndSubscribe();
                 // Connection Socket message
                 sendMsgToTasker(socketStateConnection.toString());
+
+                timer = new Timer();
+                if (pingSocTask == null) {
+                    pingSocTask = new PingSocketTask(socket);
+                    timer.schedule(pingSocTask, 0, 20000);
+                }
             }
 
         }).on("all", new Emitter.Listener() {
@@ -198,8 +209,17 @@ public final class SocketIOHandler {
             @Override
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Event handle "); //$NON-NLS-1$
-                JSONObject o = (JSONObject) args[0];
-
+                JSONObject o;
+                try {
+                    o = (JSONObject) args[0];
+                } catch (ClassCastException ex) {
+                    o = new JSONObject();
+                    try {
+                        o.put("error", "malformated message");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
                 // Adding HTTP Info
                 try {
                     o.put("httpAddr", httpAddr);
@@ -218,6 +238,13 @@ public final class SocketIOHandler {
 //                TaskerPlugin.Event.addPassThroughMessageID(BackgroundService.INTENT_REQUEST_REQUERY);
 //                context.sendBroadcast(BackgroundService.INTENT_REQUEST_REQUERY);
             }
+        }).on("ping", new Emitter.Listener() {
+
+            @Override
+            public void call(Object... args) {
+                Log.v(Constants.LOG_TAG, "PONG");
+                socket.emit("pong");
+            }
 
         }).on(Socket.EVENT_CONNECT_ERROR, new Emitter.Listener() {
 
@@ -234,7 +261,13 @@ public final class SocketIOHandler {
                 // Disconnection Socket message
                 Log.v(Constants.LOG_TAG, "JSON disconnection socket : " + socketStateDisconnection.toString());
                 sendMsgToTasker(socketStateDisconnection.toString());
-//                socket.off();
+
+                if (timer != null) {
+                    pingSocTask.cancel();
+                    pingSocTask = null;
+                    timer.cancel();
+                    timer = null;
+                }
             }
 
         }).on(Socket.EVENT_RECONNECT, new Emitter.Listener() {
@@ -243,6 +276,10 @@ public final class SocketIOHandler {
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Reconnection "); //$NON-NLS-1$
                 identifyAndSubscribe();
+
+                timer = new Timer();
+                pingSocTask = new PingSocketTask(socket);
+                timer.schedule(pingSocTask, 0, 20000);
             }
 
         });
@@ -252,7 +289,7 @@ public final class SocketIOHandler {
         sendMsgToTasker(socketStateCreation.toString());
     }
 
-    public void socketOff(){
+    public void socketOff() {
         this.socket.off();
     }
 
@@ -265,6 +302,21 @@ public final class SocketIOHandler {
             return true;
         }
         return !newLogin.equals(this.login) || !newPass.equals(this.pass) || !newAddr.equals(this.host);
+    }
+
+    private class PingSocketTask extends TimerTask {
+
+        private Socket socket;
+
+        public PingSocketTask(Socket soc) {
+            this.socket = soc;
+        }
+
+        @Override
+        public void run() {
+            Log.v(Constants.LOG_TAG, "Ping!");
+            socket.emit("ping", true);
+        }
     }
 
 }

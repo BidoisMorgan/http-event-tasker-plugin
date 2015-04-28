@@ -52,8 +52,8 @@ public final class QueryReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, final Intent intent) {
 
-        Log.e(Constants.LOG_TAG,
-                String.format("INTENT %s TYPE %s %s", intent.getAction(), intent.getType(), intent.toString())); //$NON-NLS-1$
+//        Log.e(Constants.LOG_TAG,
+//                String.format("INTENT %s TYPE %s %s", intent.getAction(), intent.getType(), intent.toString())); //$NON-NLS-1$
 
         /*
          * Always be strict on input parameters! A malicious third-party app could send a malformed Intent.
