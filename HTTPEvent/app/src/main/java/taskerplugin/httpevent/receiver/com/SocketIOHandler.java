@@ -12,11 +12,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import taskerplugin.httpevent.Constants;
 import taskerplugin.httpevent.TaskerPlugin;
@@ -77,14 +86,33 @@ public final class SocketIOHandler {
     }
 
     public void setServer(String host) {
-        IO.Options opts = new IO.Options();
+        /** SSL **/
+        SSLContext sc = null;
         try {
-            IO.setDefaultSSLContext(SSLContext.getDefault());
-            opts.sslContext = SSLContext.getDefault();
+            sc = SSLContext.getInstance("TLS");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+        try {
+            sc.init(null, trustAllCerts, new SecureRandom());
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+        IO.setDefaultSSLContext(sc);
+        HttpsURLConnection.setDefaultHostnameVerifier(new RelaxedHostNameVerifier());
+
+        // socket options
+        IO.Options opts = new IO.Options();
+        opts.forceNew = true;
         opts.reconnection = true;
+
+        if (host.split(":")[0].equals("https")) {
+            opts.secure = true;
+        } else {
+            opts.secure = false;
+        }
+        opts.sslContext = sc;
+
         if (this.host == null) {
             this.host = host;
             try {
@@ -327,5 +355,26 @@ public final class SocketIOHandler {
             socket.emit("ping", true);
         }
     }
+
+    /*** SSL ***/
+    public static class RelaxedHostNameVerifier implements HostnameVerifier {
+        public boolean verify(String hostname, SSLSession session) {
+            return true;
+        }
+    }
+
+    private TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return new java.security.cert.X509Certificate[]{};
+        }
+
+        public void checkClientTrusted(X509Certificate[] chain,
+                                       String authType) throws CertificateException {
+        }
+
+        public void checkServerTrusted(X509Certificate[] chain,
+                                       String authType) throws CertificateException {
+        }
+    }};
 
 }
