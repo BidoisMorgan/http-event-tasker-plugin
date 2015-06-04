@@ -892,7 +892,7 @@ public class TaskerPlugin {
 			// pick a number
 			toReturn = sr.nextInt( Integer.MAX_VALUE );
 	
-			// check we havn't see it recently
+			// check we haven't see it recently
 			for ( int seen : lastRandomsSeen ) {
 				if ( seen == toReturn ) {
 					toReturn = -1;

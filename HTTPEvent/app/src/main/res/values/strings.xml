@@ -1,18 +1,18 @@
 <resources>
-    <string name="app_name">HTTP Event Plug-in</string>
+    <string name="app_name">TNES: Tasker Network Event Server</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="plugin_name">HTTP Event</string>
-    <string name="lbl_addr">IP Address :</string>
-    <string name="lbl_port">Port :</string>
-    <string name="lbl_name">Nom évènement :</string>
-    <string name="lbl_filter">Filtres :</string>
-    <string name="btn_lbl_new_filter">Ajouter filtre</string>
-    <string name="btn_lbl_delete_filter">Supprimer</string>
-    <string name="lbl_filter_help">(Un filtre par ligne)</string>
-    <string name="lbl_address_socket_server">Adresse serveur socket</string>
+    <string name="plugin_name">Network Event</string>
+    <string name="lbl_addr">HTTP server at </string>
+    <string name="lbl_port">:</string>
+    <string name="lbl_name">Event name:</string>
+    <string name="lbl_filter">Filters:</string>
+    <string name="btn_lbl_new_filter">Add filter</string>
+    <string name="btn_lbl_delete_filter">Remove filter</string>
+    <string name="lbl_filter_help">(one per line)</string>
+    <string name="lbl_address_socket_server">Remote broker adress:</string>
     <string name="lbl_address_socket_server_default_value">http://thacthab.herokuapp.com/</string>
-    <string name="lbl_login_socket_server">Login :</string>
-    <string name="lbl_password_socket_server">Password :</string>
+    <string name="lbl_login_socket_server">Login: </string>
+    <string name="lbl_password_socket_server">Password: </string>
 </resources>

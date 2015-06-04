@@ -66,19 +66,19 @@ public class HTTPHandler {
                                         Map<String, String> files) {
             final StringBuilder buf = new StringBuilder();
 
-            buf.append("Header<br>");
+            buf.append("Header<br/>");
             for (Map.Entry<String, String> kv : headers.entrySet()) {
                 buf.append(kv.getKey() + " : " + kv.getValue() + "\n");
             }
 
-            buf.append("<br>----<br>");
+            buf.append("<br/>----<br/>");
 
-            buf.append("method = " + method + "<br>");
-            buf.append("uri = " + uri + "<br>");
+            buf.append("method = " + method + "<br/>");
+            buf.append("uri = " + uri + "<br/>");
 
-            buf.append("Params<br>");
+            buf.append("Params<br/>");
             for (Map.Entry<String, String> p : parms.entrySet()) {
-                buf.append(p.getKey() + " : " + p.getValue() + "<br>");
+                buf.append(p.getKey() + " : " + p.getValue() + "<br/>");
             }
 
             final String html = "<html><head><head><body><h1>Hello, World</h1></body>" + buf + "</html>";

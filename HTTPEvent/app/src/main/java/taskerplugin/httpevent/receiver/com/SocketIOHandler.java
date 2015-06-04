@@ -46,9 +46,10 @@ public final class SocketIOHandler {
     private String httpAddr;
     private String httpPort;
 
-    private final JSONObject socketStateCreation = new JSONObject();
-    private final JSONObject socketStateConnection = new JSONObject();
-    private final JSONObject socketStateDisconnection = new JSONObject();
+    private final JSONObject socketStateCreation        = new JSONObject();
+    private final JSONObject socketStateConnection      = new JSONObject();
+    private final JSONObject socketStateDisconnection   = new JSONObject();
+    private final JSONObject socketErrorConnection      = new JSONObject();
 
     private Timer timer;
     private PingSocketTask pingSocTask;
@@ -56,6 +57,7 @@ public final class SocketIOHandler {
     public SocketIOHandler(String host, Context ctxt) {
         try {
             this.context = ctxt;
+            this.timer = null;
             // Initialize socket with the host
             this.socket = IO.socket(host);
             Log.v(Constants.LOG_TAG, "Constructeur socket handler"); //$NON-NLS-1$
@@ -67,6 +69,7 @@ public final class SocketIOHandler {
     }
 
     public SocketIOHandler(Context ctxt) {
+        this.timer = null;
         this.context = ctxt;
         this.createSockeStateMsg();
         Log.v(Constants.LOG_TAG, "Constructeur socket handler"); //$NON-NLS-1$
@@ -80,6 +83,8 @@ public final class SocketIOHandler {
             socketStateConnection.put("socketstate", "connection");
             socketStateDisconnection.put("disconnection", true);
             socketStateDisconnection.put("socketstate", "disconnection");
+            socketErrorConnection.put("connectionError", true);
+            socketErrorConnection.put("socketstate", "connectionError");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -223,6 +228,21 @@ public final class SocketIOHandler {
         this.socket.emit("login", loginObject);
     }
 
+    private void cancelTimer() {
+        if(this.timer != null) {
+            this.timer.cancel();
+            this.timer = null;
+        }
+    }
+    private void initTimer(final Socket socket) {
+        initTimer(socket, 20000);
+    }
+    private void initTimer(final Socket socket, long delay) {
+        this.cancelTimer();
+        this.timer = new Timer();
+        timer.schedule(new PingSocketTask(socket), delay, delay);
+    }
+
     private void configureSocket(final Socket socket) {
         socket.off();
         socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
@@ -234,11 +254,12 @@ public final class SocketIOHandler {
                 // Connection Socket message
                 sendMsgToTasker(socketStateConnection.toString());
 
-                timer = new Timer();
+                initTimer(socket);
+                /*timer = new Timer();
                 if (pingSocTask == null) {
                     pingSocTask = new PingSocketTask(socket);
-                    timer.schedule(pingSocTask, 0, 20000);
-                }
+                    timer.schedule(pingSocTask, 20000, 20000);
+                }*/
             }
 
         }).on("all", new Emitter.Listener() {
@@ -288,6 +309,8 @@ public final class SocketIOHandler {
             @Override
             public void call(Object... args) {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Connect Error "); //$NON-NLS-1$
+                cancelTimer();
+                sendMsgToTasker(socketErrorConnection.toString());
             }
 
         }).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
@@ -299,12 +322,13 @@ public final class SocketIOHandler {
                 Log.v(Constants.LOG_TAG, "JSON disconnection socket : " + socketStateDisconnection.toString());
                 sendMsgToTasker(socketStateDisconnection.toString());
 
-                if (timer != null) {
+                cancelTimer();
+                /*if (timer != null) {
                     pingSocTask.cancel();
                     pingSocTask = null;
                     timer.cancel();
                     timer = null;
-                }
+                }*/
             }
 
         }).on(Socket.EVENT_RECONNECT, new Emitter.Listener() {
@@ -314,9 +338,10 @@ public final class SocketIOHandler {
                 Log.v(Constants.LOG_TAG, "Socket IO -> Reconnection "); //$NON-NLS-1$
                 identifyAndSubscribe();
 
-                timer = new Timer();
+                initTimer(socket);
+                /*timer = new Timer();
                 pingSocTask = new PingSocketTask(socket);
-                timer.schedule(pingSocTask, 0, 20000);
+                timer.schedule(pingSocTask, 20000, 20000);*/
             }
 
         });
