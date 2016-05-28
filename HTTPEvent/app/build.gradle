@@ -7,7 +7,7 @@ android {
         applicationId "bidoismorgan.httpevent"
         minSdkVersion 15
         targetSdkVersion 22
-        versionName '1.0.10'
+        versionName '1.0.13'
         versionCode 13
     }
     buildTypes {
