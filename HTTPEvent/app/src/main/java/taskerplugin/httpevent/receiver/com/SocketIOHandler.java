@@ -164,7 +164,7 @@ public final class SocketIOHandler {
         this.login = login;
         this.pass = pass;
 
-        if (!this.socket.connected()) {
+        if (this.socket != null && !this.socket.connected()) {
             Log.v(Constants.LOG_TAG, "connect()"); //$NON-NLS-1$
             this.socket.connect();
         }
