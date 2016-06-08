@@ -76,6 +76,6 @@ public final class ServiceWakeLockManager
             }
         }
 
-        sWakeLock.release();
+        if(sWakeLock != null) {sWakeLock.release();}
     }
 }

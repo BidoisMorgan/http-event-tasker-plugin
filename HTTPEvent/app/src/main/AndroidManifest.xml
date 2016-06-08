@@ -76,7 +76,7 @@
         <receiver
             android:name="taskerplugin.httpevent.receiver.QueryReceiver"
             android:exported="true"
-            android:process=":background"
+            android:process=":foreground"
             tools:ignore="ExportedReceiver">
 
             <!-- this Intent filter allows the plug-in to discovered by Locale and be queried -->
@@ -92,7 +92,7 @@
         <service
             android:name="taskerplugin.httpevent.receiver.BackgroundService"
             android:exported="false"
-            android:process=":background" />
+            android:process=":foreground" />
 
     </application>
 </manifest>

@@ -13,8 +13,10 @@
 package taskerplugin.httpevent.receiver;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -119,52 +121,75 @@ public final class BackgroundService extends Service implements NetworkStateRece
          * If the Intent is null, then the service is being started by Android rather than being started from
          * the BroadcastReceiver.
          */
+        String ssAddr, ssLogin, ssPass, httpAddr, httpPort;
         if (null != intent) {
-
             Bundle dataBundle = intent.getBundleExtra(com.twofortyfouram.locale.Intent.EXTRA_BUNDLE);
-            String ssAddr = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_ADDR);
-            String ssLogin = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN);
-            String ssPass = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_PASS);
+            ssAddr = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_ADDR);
+            ssLogin = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_LOGIN);
+            ssPass = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_SOC_SERV_PASS);
 
-            String httpAddr = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR);
-            String httpPort = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_HTTP_SERV_PORT);
+            httpAddr = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_HTTP_SERV_ADDR);
+            httpPort = dataBundle.getString(PluginBundleManager.BUNDLE_EXTRA_STRING_HTTP_SERV_PORT);
 
-            boolean resetSocketInfo = mSocketHandler.resetSocketInfo(ssAddr, ssLogin, ssPass);
+            SharedPreferences prefs = getSharedPreferences("TNES", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("ssAddr", ssAddr);
+            editor.putString("ssLogin", ssLogin);
+            editor.putString("ssPass", ssPass);
+            editor.putString("httpAddr", httpAddr);
+            editor.putString("httpPort", httpPort);
+            editor.commit();
+        } else {
+            SharedPreferences prefs = getSharedPreferences("TNES", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            ssAddr   = prefs.getString("ssAddr"  , "http://thacthab.herokuapp.com/");
+            ssLogin  = prefs.getString("ssLogin" , "");
+            ssPass   = prefs.getString("ssPass"  , "");
+            httpAddr = prefs.getString("httpAddr", "");
+            httpPort = prefs.getString("httpPort", "8765");
+        }
 
-            /*
-             * Because Services are started from an event loop, there is a timing gap between when the
-             * BroadcastReceiver checks the screen state and when the Service starts monitoring for screen
-             * changes.
-             *
-             * This case is only important the first time the Service starts.
-             */
-            if (!mIsOnStartCommandCalled) {
+
+
+
+        boolean resetSocketInfo = mSocketHandler.resetSocketInfo(ssAddr, ssLogin, ssPass);
+
+        /*
+         * Because Services are started from an event loop, there is a timing gap between when the
+         * BroadcastReceiver checks the screen state and when the Service starts monitoring for screen
+         * changes.
+         *
+         * This case is only important the first time the Service starts.
+         */
+        if (!mIsOnStartCommandCalled) {
 //                TaskerPlugin.Event.addPassThroughMessageID(INTENT_REQUEST_REQUERY);
 //                sendBroadcast(INTENT_REQUEST_REQUERY);
-                mHTTPDHandler.setInformation(httpAddr, httpPort);
-                mHTTPDHandler.initializeHTTPServer();
-                mHTTPDHandler.start();
+            /*if(mHTTPDHandler == null) {
+                mHTTPDHandler = new HTTPHandler( getApplication() );
+            }*/
+            mHTTPDHandler.setInformation(httpAddr, httpPort);
+            mHTTPDHandler.initializeHTTPServer();
+            mHTTPDHandler.start();
 
-                Log.v(Constants.LOG_TAG, String.format("FISRT socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
-                mSocketHandler.setServer(ssAddr);
-                mSocketHandler.addHTTPInfo(httpAddr, httpPort);
-                mSocketHandler.connect(ssLogin, ssPass);
-            } else if (resetSocketInfo) {
-                Log.v(Constants.LOG_TAG, String.format("RESET socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
-                mSocketHandler.addHTTPInfo(httpAddr, httpPort);
-                mSocketHandler.setServer(ssAddr);
-                mSocketHandler.connect(ssLogin, ssPass);
-            }
+            //Log.v(Constants.LOG_TAG, String.format("FISRT socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
+            mSocketHandler.setServer(ssAddr);
+            mSocketHandler.addHTTPInfo(httpAddr, httpPort);
+            mSocketHandler.connect(ssLogin, ssPass);
 
-            ServiceWakeLockManager.releaseLock();
+            mIsOnStartCommandCalled = true;
+        } else if (resetSocketInfo) {
+            Log.v(Constants.LOG_TAG, String.format("RESET socket server : %s login : %s mdp : %s", ssAddr, ssLogin, ssPass)); //$NON-NLS-1$
+            mSocketHandler.addHTTPInfo(httpAddr, httpPort);
+            mSocketHandler.setServer(ssAddr);
+            mSocketHandler.connect(ssLogin, ssPass);
         }
 
         /*
          * It is OK for this to be set after the WakeLock is released.
          */
-        mIsOnStartCommandCalled = true;
+        ServiceWakeLockManager.releaseLock();
 
-        return START_STICKY;
+        return START_STICKY; // START_REDELIVER_INTENT;
     }
 
     @Override
@@ -175,6 +200,8 @@ public final class BackgroundService extends Service implements NetworkStateRece
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        mIsOnStartCommandCalled = false;
 
         mHTTPDHandler.stop();
         mHTTPDHandler = null;
